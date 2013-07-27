@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="css/bootstrap.css" rel="stylesheet" media="screen">
+        <link href="css/bootstrap-responsive.css" rel="stylesheet" media="screen">
+        <link rel="stylesheet" href="js/codemirror-3.14/lib/codemirror.css" media="screen">
+        <link rel="stylesheet" href="js/codemirror-3.14/addon/hint/show-hint.css" media="screen">
+        <link href="css/app.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+        <!-- 
+            app header 
+            Contains:
+            - request name/input field to set a name
+            - save/open buttons
+        -->
+        <header>
+
+        </header>
+
+        <!-- app container -->
+        <div class="container-fluid">
+
+            <div class="row-fluid">
+                <div class="span2">
+                    <!-- 
+                        App navigation.
+                        Hidden by default. Appears from the left.
+                    -->
+                    <nav id="app-nav">ble</nav>
+                </div>
+                <div class="span10">
+
+                    <section id="request-panel">
+                        <div id="url-panel">
+                            <div class="input-prepend" id="url-one-filed">
+                                <button id="request-url-panel-toggle" data-toggle="tooltip" data-delay='{"show":700,"hide":0}' data-placement="left" title="Click to toggle URL editor" class="btn has-tooltip" type="button"></button>
+                                <input class="input-block-level" id="full-request-url" type="text" value="" placeholder="enter HTTP request URL here">
+                            </div>
+                            <div class="" id="url-editor">
+                                <input class="input-block-level" id="url-editor-path" type="text" placeholder="enter path (e.g. /my/path/to/api/endpoint/)">
+                                <div class="query-params-section" id="query-params-container">
+                                    <div class="query-parameters-header">
+                                        Query parameters: <a href="about:blank" class="" data-action="query-parameters-add">Add</a>
+                                    </div>
+                                </div>
+                                <input class="input-block-level" id="url-editor-hash" type="text" placeholder="enter hash tag here (e.g. #section)">
+                            </div>
+                        </div>
+
+                        <div id="method-panel" class="flex">
+                            <div class="visible-desktop primary">
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodGET" value="GET" checked>
+                                    GET
+                                </label>
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodPOST" value="POST">
+                                    POST
+                                </label>
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodPUT" value="PUT">
+                                    PUT
+                                </label>
+
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodPATCH" value="PATCH">
+                                    PATCH
+                                </label>
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodDELETE" value="DELETE">
+                                    DELETE
+                                </label>
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodHEAD" value="HEAD">
+                                    HEAD
+                                </label>
+                                <label class="radio flex centerLeft">
+                                    <input type="radio" name="HttpMethod" id="HttpMethodOPTIONS" value="OPTIONS">
+                                    OPTIONS
+                                </label>
+                                <div class="flex centerLeft primary otherHttpMethodContainer">
+                                    <label class="radio inline flex centerLeft">
+                                        <input type="radio" name="HttpMethod" id="HttpMethodOTHER" value="OTHER">
+                                        OTHER
+                                    </label>
+                                    <input class="inline disabled" id="HttpMethodOTHERValue" type="text" placeholder="HTTP Method" disabled>
+                                </div>
+                            </div>
+                            <div class="hidden-desktop method-mobile-container">
+                                <div class="label httpMethodLabelMobile">
+                                    HTTP method: 
+                                </div>
+                                <select id="selectedHttpMethod" class="flex primary">
+                                    <option>GET</option>
+                                    <option>POST</option>
+                                    <option>PUT</option>
+                                    <option>PATCH</option>
+                                    <option>DELETE</option>
+                                    <option>HEAD</option>
+                                    <option>OPTIONS</option>
+                                    <option>OTHER</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="HttpHeadersPanel">
+                            <ul class="nav nav-tabs" id="HttpHeadersTabNav">
+                                <li class="active"><a href="about:blank" data-toggle="tab" data-target="#HttpHeadersRaw">Raw</a></li>
+                                <li><a href="about:blank" data-toggle="tab" data-target="#HttpHeadersForm">Form</a></li>
+                                <li class="tabs-title">HTTP headers</li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="HttpHeadersRaw">
+                                    <textarea id="RawHttpHeaders"></textarea>
+                                    <div id="RawHeadersActions">
+                                        <a id="RunCodeMirrorHeadersAction" href="#">Run code mirror editor</a>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="HttpHeadersForm">
+                                    <div class="wrapper">
+                                        <div class="request-headers-header">
+                                            <a href="about:blank" class="" data-action="request-headers-add">Add</a>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="HttpPayloadPanel" class="hidden">
+                            <ul class="nav nav-tabs" id="HttpPayloadTabNav">
+                                <li class="active"><a href="about:blank" data-toggle="tab" data-target="#HttpPayloadRaw">Raw</a></li>
+                                <li><a href="about:blank" data-toggle="tab" data-target="#HttpPayloadForm">Form</a></li>
+                                <li><a href="about:blank" data-toggle="tab" data-target="#HttpPayloadFiles">Files <span id="HttpFilesCounter">(0)</span></a></li>
+                                <li class="tabs-title">HTTP payload</li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane active" id="HttpPayloadRaw">
+                                    <textarea id="RawHttpPayload"></textarea>
+                                </div>
+                                <div class="tab-pane" id="HttpPayloadForm">
+                                    <div class="wrapper">
+                                        <div class="request-payload-header">
+                                            <a href="about:blank" class="" data-action="request-payload-add">Add</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane" id="HttpPayloadFiles">
+                                    <div class="wrapper">
+                                        <div class="request-payload-header">
+                                            <a href="about:blank" class="" data-action="request-payload-file-add">Add</a>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="RequestActionsPanel">
+                            <div class="request-actions-row">
+                                <a id="ClearRequestButton" href="about:blank" data-action="clear-form-action" class="btn">Clear</a>
+                                <a id="SendRequestButton" href="about:blank" data-action="send-form-action" class="btn btn-primary disabled">Send</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- 
+            HTML templates.
+        -->
+    <template id="query-editor-param-row-template">
+        <div class="query-param-row input-append">
+            <input class="query-key" type="text" placeholder="key">
+            <input class="query-value" type="text" placeholder="value">
+            <button class="btn has-tooltip hidden-phone" data-action="remove-query-param" type="button" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">remove</button>
+            <button class="btn has-tooltip hidden-phone" data-action="encode-query-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Encode URL component. Use CTRL to replace + with %20" title="Encode value">encode</button>
+            <button class="btn has-tooltip hidden-phone" data-action="decode-query-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Decode URL component. Use CTRL to replace %20 with +" title="Decode value">decode</button>
+            <button class="btn has-tooltip visible-phone" data-action="remove-query-param" type="button" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">x</button>
+            <button class="btn has-tooltip visible-phone" data-action="encode-query-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Encode URL component. Use CTRL to replace + with %20">enc</button>
+            <button class="btn has-tooltip visible-phone" data-action="decode-query-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Decode URL component. Use CTRL to replace %20 with +">dec</button>
+        </div>
+    </template>
+    <template id="http-headers-row-template">
+        <div class="request-header-param-row input-append">
+            <input class="request-header-key" type="text" placeholder="key">
+            <input class="request-header-value" type="text" placeholder="value">
+            <button class="btn has-tooltip" data-action="remove-request-header-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Remove this header from editor">remove</button>
+        </div>
+    </template>
+    
+    <template id="http-payload-row-template">
+        <div class="request-payload-row input-append">
+            <input class="request-payload-key" type="text" placeholder="key">
+            <input class="request-payload-value" type="text" placeholder="value">
+            <button class="btn has-tooltip" data-action="remove-payload-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Remove this param from editor">remove</button>
+        </div>
+    </template>
+    <template id="http-payload-file-row-template">
+        <div class="request-payload-file-row input-append">
+            <input class="request-payload-file-field" type="file">
+            <input class="request-payload-file-name" type="text" placeholder="name">
+            <button class="btn has-tooltip" data-action="remove-payload-file-param" type="button" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Remove file field">remove</button>
+        </div>
+    </template>
+    
+    <!-- Dialogs -->
+    
+    <div id="addMethodDialod" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="myModalLabel">Set HTTP method</h3>
+        </div>
+        <div class="modal-body">
+            <input class="input-block-level" id="dialog-add-http-method" type="text" placeholder="HTTP method">
+        </div>
+        <div class="modal-footer">
+            <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+            <button class="btn btn-primary" id="dialog-save-http-method">Save</button>
+        </div>
+    </div>
+
+    <script src="js/idbstore.min.js"></script>
+    <script src="js/jquery.1.10.1.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/knockout.js"></script>
+    <script src="js/knockout-bootstrap.min.js"></script>
+    <script src="js/declarativeWebRequest.js"></script>
+    <!--
+    <script src="js/codemirror-3.14/lib/codemirror.js"></script>
+    <script src="js/codemirror-3.14/addon/runmode/runmode.js"></script>
+    <script src="js/codemirror-3.14/addon/hint/show-hint.js"></script>
+    <script src="js/codemirror-3.14/addon/hint/headers-hint.js"></script>
+    <script src="js/codemirror-3.14/addon/mode/loadmode.js"></script>
+    <script src="js/codemirror-3.14/mode/xml/xml.js"></script>
+    <script src="js/codemirror-3.14/mode/javascript/javascript.js"></script>
+    <script src="js/codemirror-3.14/mode/css/css.js"></script>
+    <script src="js/codemirror-3.14/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="js/codemirror-3.14/mode/http/http.js"></script>
+    <script src="js/codemirror-3.14/mode/headers/headers.js"></script>
+    -->
+    <script src="js/plugins.js"></script>
+    <script src="js/uri/Uri.js"></script>
+    
+    <script src="js/ui.js"></script>
+    <script src="js/logic.js"></script>
+</body>
+</html>

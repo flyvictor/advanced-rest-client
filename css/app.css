@@ -1,0 +1,186 @@
+#app-nav{
+    
+}
+.has-tooltip{}
+#full-request-url {
+-webkit-flex: 1 0 0;
+}
+#url-panel {
+margin-bottom: 0.7em;
+}
+#url-one-filed {
+    display: -webkit-flex;
+}
+.query-params-section{
+    margin-bottom: 10px;
+}
+.request-payload-file-row,
+.request-payload-row,
+.request-header-param-row,
+.query-param-row {
+    display: -webkit-flex;
+    width: 100%;
+}
+.request-payload-row .request-payload-key,
+.request-header-param-row .request-header-key,
+.query-param-row .query-key{}
+
+.request-payload-row .request-payload-value,
+.request-header-param-row .request-header-value,
+.query-param-row .query-value {
+    -webkit-flex: 1 0 0;
+    border-radius: 0;
+    border-left: 0;
+}
+.query-parameters-header{}
+#url-editor{display: none;}
+.expanded #url-editor{display: block;}
+
+#request-url-panel-toggle:after {
+    content: "+";
+}
+.expanded #request-url-panel-toggle:after {
+    content: "-";
+}
+#HttpMethodOTHERValue {
+    vertical-align: middle;
+    margin-top: -3px;
+    margin-bottom: 0;
+    padding-top: 0;
+}
+.radio.inline.otherHttpLabel{
+    vertical-align: middle;
+    margin-top: 0;
+    padding-top: 4px;
+}
+.flex{
+    display: -webkit-flex !important;
+    display: flex !important;
+}
+.flex .centerLeft,
+.flex.centerLeft{
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+}
+.flex .primary,
+.flex.primary{
+    -webkit-flex: 1 0 0;
+    flex: 1 0 0;
+}
+#method-panel .radio input[type="radio"]{
+    float: none;    
+    margin-right: 0.2em;
+}
+#method-panel .radio.flex{
+    margin-right: 2%;
+}
+.otherHttpMethodContainer label.radio.inline{
+    padding-top: 0;
+}
+.httpMethodLabelMobile{
+    vertical-align: middle;
+    -webkit-align-items: center;
+    -webkit-align-content: center;
+    display: -webkit-flex;
+    margin-right: 1em;
+    height: 25px;
+}
+.method-mobile-container{
+    width: 100%;
+}
+.tab-content>.active {
+    display: -webkit-flex;
+    
+}
+#HttpPayloadFiles .wrapper,
+#HttpPayloadForm .wrapper,
+#HttpHeadersForm .wrapper{
+    -webkit-flex-direction: column;
+    width: 100%;
+}
+#RawHttpPayload,
+#RawHttpHeaders {
+    width: 100%;
+    border-radius: 0;
+}
+.CodeMirror pre {
+    display: initial;
+    padding: initial;
+    margin: initial;
+    font-size: initial;
+    line-height: initial;
+    word-break: initial; 
+    word-wrap: initial;
+    white-space: initial;
+    background-color: initial;
+    border: initial;
+    -webkit-border-radius: initial;
+    border-radius: initial;
+}
+.CodeMirror-wrap pre{
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: normal;
+    display: block;
+    color: black;
+    font-family: monospace;
+    padding: 0 4px;
+    line-height: 1.3;
+}
+.CodeMirror {
+    border: 1px #D8D8D8 solid;
+    height: auto;
+    width: 100%;
+    margin-top: 0;
+    padding-top: 0;
+    min-height: 55px;
+}
+#HttpPayloadTabNav,
+#HttpHeadersTabNav {
+    padding-bottom: 0;
+    margin-bottom: 0px;
+}
+.CodeMirror-scroll {
+    cursor: text;
+}
+.request-payload-header,
+.request-headers-header {
+    margin-left: 3px;
+}
+.tabs-title {
+    padding: 8px 0;
+    margin-left: 1em;
+    font-size: x-small;
+    font-style: italic;
+    font-weight: bold;
+}
+#HttpHeadersPanel{
+    margin-bottom: 15px;
+}
+input[type="file"]{
+    line-height: initial;
+}
+.suggestion-desc {
+    font-size: 11px;
+    display: block;
+}
+#HttpHeadersRaw{
+    position: relative;
+}
+#RawHeadersActions {
+    position: absolute;
+    bottom: -7px;
+    left: 0;
+    font-size: 11px;
+    opacity: 0;
+    -webkit-transition: opacity 0.3s;
+}
+#HttpHeadersRaw:hover #RawHeadersActions{
+    opacity: 1;
+}
+.tab-content {
+    overflow: initial !important;
+}
+input:invalid, textarea:invalid, select:invalid {
+    color: #b94a48;
+}
