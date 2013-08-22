@@ -27,6 +27,9 @@ function WebRequest() {
     // calback just check if request ID match.
     // On complete set this value to null;
     this.requestId = null;
+    this.running = false;
+    this.error = false;
+    this.requestDataGetterCallback = [];
 
     this.requestFilter = {
         urls: ["<all_urls>"],
@@ -66,9 +69,19 @@ WebRequest.prototype = {
         this.requestHeaders = [];
         this.redirectData = [];
         this.errorData = {}
+        this.running = false;
+        this.error = false;
+        this.requestDataGetterCallback = [];
         this.clearRules();
     },
-    getRequestData: function() {
+    getRequestData: function(clb) {
+        if(this.running){
+            //the request is still running.
+            //Add callback to callbacks list.
+            this.requestDataGetterCallback[this.requestDataGetterCallback.length] = clb;
+            return;
+        }
+        
         var requestDetails = {
             URL: this.masterURL,
             RESPONSE_HEADERS: this.responseHeaders,
@@ -76,7 +89,7 @@ WebRequest.prototype = {
             REDIRECT_DATA: this.redirectData,
             ERROR: this.errorData
         };
-        return requestDetails;
+        clb.call(window,requestDetails);
     },
     /**
      * Check if request url match tested URL
@@ -100,10 +113,11 @@ WebRequest.prototype = {
         return true;
     },
     onBeforeRequest: function(details){
-        console.log('onBeforeRequest',details);
+        
         if (!this.checkRequestUrl(details)) {
             return;
         }
+        console.log('onBeforeRequest',details);
         this.requestId = details.requestId;
     },
     /**
@@ -113,10 +127,11 @@ WebRequest.prototype = {
      * @returns {Void}
      */
     onHeadersSend: function(details) {
-        console.log('onHeadersSend',details);
+        
         if(this.requestId !== details.requestId){
             return;
         }
+        console.log('onHeadersSend',details);
 //        if (!this.checkRequestUrl(details)) {
 //            return;
 //        }
@@ -130,10 +145,11 @@ WebRequest.prototype = {
      * @returns {Void}
      */
     onBeforeRedirect: function(details) {
-        console.log('onBeforeRedirect',details);
+        
         if(this.requestId !== details.requestId){
             return;
         }
+        console.log('onBeforeRedirect',details);
 //        if (!this.checkRequestUrl(details)) {
 //            return;
 //        }
@@ -157,10 +173,11 @@ WebRequest.prototype = {
      * @returns {Void}
      */
     onRequestCompleted: function(details) {
-        console.log('onRequestCompleted',details);
+        
         if(this.requestId !== details.requestId){
             return;
         }
+        console.log('onRequestCompleted',details);
 //        if (!this.checkRequestUrl(details)) {
 //            return;
 //        }
@@ -171,6 +188,9 @@ WebRequest.prototype = {
         // Clean rules or if the user will not call another request all XmlHttpRequest for this URL will be affected. 
         this.clearRules();
         this.requestId = null;
+        this.running = false;
+        this.error = false;
+        this._callDataGetterCallbacks();
     },
     /**
      * Called when the request complete with error.
@@ -178,10 +198,11 @@ WebRequest.prototype = {
      * @returns {Void}
      */
     onRequestError: function(details) {
-        console.log(details);
+        
         if (!this.checkRequestUrl(details)) {
             return;
         }
+        console.log('onRequestError',details);
         //
         // Clean rules or if the user will not call another request all XmlHttpRequest for this URL will be affected. 
         this.clearRules();
@@ -192,6 +213,25 @@ WebRequest.prototype = {
             timeStamp: details.timeStamp,
             url: details.url
         }
+        this.running = false;
+        this.error = true;
+        this._callDataGetterCallbacks();
+    },
+            
+    _callDataGetterCallbacks: function(){
+        if(!this.requestDataGetterCallback || this.requestDataGetterCallback.length === 0){
+            return;
+        }
+        var requestDetails = {
+            URL: this.masterURL,
+            RESPONSE_HEADERS: this.responseHeaders,
+            REQUEST_HEADERS: this.requestHeaders,
+            REDIRECT_DATA: this.redirectData,
+            ERROR: this.errorData
+        };
+        var clb = this.requestDataGetterCallback.shift();
+        clb.call(window,requestDetails);
+        setTimeout(this._callDataGetterCallbacks.bind(this), 0);        
     },
     /**
      * Clear all rules set earlier to the declarativeWebRequest.
@@ -216,7 +256,7 @@ WebRequest.prototype = {
         var unsupportedHeadersList = [];
         for (i in requestHeaders) {
             var header = requestHeaders[i];
-            if (this.notSupportedW3CHeaders.indexOf(header.name.toLowerCase()) != -1) {
+            if (this.notSupportedW3CHeaders.indexOf(header.key.toLowerCase()) != -1) {
                 // has unsupported header
                 unsupportedHeadersList[unsupportedHeadersList.length] = header;
             }
@@ -239,6 +279,10 @@ WebRequest.prototype = {
 
         var requestHeadersKeys = [];
         for (i = 0; i < requestHeadersLength; i++) {
+            if(typeof requestHeaders[i].key !== 'undefined'){
+                requestHeaders[i].name = requestHeaders[i].key;
+                delete requestHeaders[i].key;
+            }
             requestHeadersKeys[requestHeadersKeys.length] = requestHeaders[i].name.toLowerCase();
         }
 
@@ -330,6 +374,8 @@ WebRequest.prototype = {
         var actions = [];
         for (var i = 0; i < unsupportedHeadersList.length; i++) {
             var header = unsupportedHeadersList[i];
+            header.name = header.key;
+            delete header.key;
             actions[actions.length] = new chrome.declarativeWebRequest.SetRequestHeader(header);
         }
         return actions;
@@ -344,6 +390,7 @@ WebRequest.prototype = {
         this.reset();
         this.masterURL = data.url;
         this.setRules(data, callback);
+        this.running = true;
     }
 }
 

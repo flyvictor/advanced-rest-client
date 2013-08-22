@@ -95,29 +95,31 @@ UrlFieldService.prototype = {
         this.runTypehead();
     },
     runTypehead: function() {
-        $('#full-request-url').typeahead({
-            'source': function(query, process) {
-                var keyRange,
-                        options = {};
-                var options = {};
-                options.lower = query;
-                options.upper = query + 'z';
-                keyRange = window.restClientStore.history.makeKeyRange(options);
-                var result = [];
-                var onItem = function(item) {
-                    result[result.length] = item['url'];
-                };
-                var onEnd = function() {
-                    process(result);
-                };
-                window.restClientStore.history.iterate(onItem, {
-                    index: 'url',
-                    keyRange: keyRange,
-                    filterDuplicates: true,
-                    onEnd: onEnd
-                });
-            }
-        });
+//        $('#full-request-url').typeahead({
+//            name: 'trends',
+//            prefetch: 'https://twitter.com/trends.json'
+////            'source': function(query, process) {
+////                var keyRange,
+////                        options = {};
+////                var options = {};
+////                options.lower = query;
+////                options.upper = query + 'z';
+////                keyRange = window.restClientStore.history.makeKeyRange(options);
+////                var result = [];
+////                var onItem = function(item) {
+////                    result[result.length] = item['url'];
+////                };
+////                var onEnd = function() {
+////                    process(result);
+////                };
+////                window.restClientStore.history.iterate(onItem, {
+////                    index: 'url',
+////                    keyRange: keyRange,
+////                    filterDuplicates: true,
+////                    onEnd: onEnd
+////                });
+////            }
+//        });
     },
     onInputChanage: function(e) {
         if (this.expanded) {
@@ -132,6 +134,11 @@ UrlFieldService.prototype = {
             logGroupEnd();
         }
     },
+    /**
+     * Parse an URL string to the Uri object.
+     * @param {String} urlString
+     * @returns {Uri}
+     */
     parseUrlToDetails: function(urlString) {
         return new Uri(urlString);
     },
@@ -141,13 +148,19 @@ UrlFieldService.prototype = {
         var hashInput = document.querySelector('#url-editor-hash');
         var paramsContainers = document.querySelectorAll('#query-params-container > .query-param-row');
 
-        var uri = new Uri(srvInput.value)
-                .setPath(pathInput.value)
-                .setAnchor(hashInput.value);
-
+        var uri = new Uri(srvInput.value);
+        if(pathInput.value){
+            uri.setPath(pathInput.value);
+        }
+        if(hashInput.value){
+            uri.setAnchor(hashInput.value);
+        }
         var params = Array.prototype.slice.call(paramsContainers);
         params.forEach(function(item) {
             var values = window.restClientUI.extractQueryParamsValues(item);
+            if(values[0] === "" && values[1] === ""){
+                return;
+            }
             uri.addQueryParam(values[0], values[1]);
         });
         return uri.toString();
@@ -203,7 +216,11 @@ UrlFieldService.prototype = {
         var srvInput = document.querySelector('#full-request-url');
         var pathInput = document.querySelector('#url-editor-path');
         var hashInput = document.querySelector('#url-editor-hash');
-        srvInput.value = uri.protocol() + '://' + uri.uriParts.authority;
+        
+        var protocol = uri.protocol();
+        if(protocol && uri.uriParts.authority){
+            srvInput.value = protocol + '://' + uri.uriParts.authority;
+        }
         pathInput.value = uri.path();
         hashInput.value = uri.anchor();
         window.restClientUI.clearAllQueryParamsRows();
@@ -263,7 +280,7 @@ HeadersInputService.prototype = {
             if (headers !== null) {
                 window.restClientUI.clearAllHttpHeadersRows();
                 headers.forEach(function(header) {
-                    window.restClientUI.appendHttpDataRow('header', header.name, header.value);
+                    window.restClientUI.appendHttpDataRow('header', header.key, header.value);
                 });
             }
         }
@@ -272,7 +289,8 @@ HeadersInputService.prototype = {
     get value() {
         if (this.formOpened) {
             if (this.formChange) {
-                this._value = this.getFromDetailedUrl();
+                var _list = this.getFromHeaders();
+                this._value = HttpHeadersParser.toString(_list);
                 this.formChange = false;
             }
         } else if (restClientUI.headersCodeMirror !== null) {
@@ -301,7 +319,7 @@ HeadersInputService.prototype = {
         }.bind(this), false);
     },
     observeTabsChange: function() {
-        $('#HttpHeadersPanel a[data-toggle="tab"]').on('shown', function(e) {
+        $('#HttpHeadersPanel a[data-toggle="tab"]').on('show.bs.tab', function(e) {
             if (e.target.dataset['target'].indexOf('Raw') !== -1) {
                 // opened raw form
                 var values = this.getFromHeaders();
@@ -313,13 +331,13 @@ HeadersInputService.prototype = {
             } else {
                 //opened form tab
                 var headers = HttpHeadersParser.fromString(this.value);
-                if (headers === null) {
-                    return;
-                }
                 window.restClientUI.clearAllHttpHeadersRows();
-                headers.forEach(function(header) {
-                    window.restClientUI.appendHttpDataRow('header', header.name, header.value);
-                });
+                if (headers !== null) {
+                    headers.forEach(function(header) {
+                        window.restClientUI.appendHttpDataRow('header', header.key, header.value);
+                    });
+                }
+                window.restClientUI.ensureFormHasRow("header");
                 this.formOpened = true;
             }
         }.bind(this));
@@ -335,8 +353,10 @@ HeadersInputService.prototype = {
         return result;
     },
     runTypehead: function() {
+        
         var observeForTypehead = function(input) {
             var currentValues = [];
+            return;
             $(input).typeahead({
                 'source': function(query, process) {
                     var keyRange,
@@ -438,6 +458,10 @@ PayloadInputService.prototype = {
     },
     set value(val) {
         this._value = val;
+        var input = this.getRawInput();
+        if(input.value !== val){
+            input.value = val;
+        }
         log('Current payload value is: ', this._value);
     },
     get value() {
@@ -589,9 +613,9 @@ var HttpHeadersParser = {
             if (!result.isEmpty()) {
                 result += "\n";
             }
-            var key = header.name,
+            var key = header.key,
                     value = header.value;
-            if (!(key.isEmpty() && value.isEmpty())) {
+            if (key && value && !(key.isEmpty() && value.isEmpty())) {
                 result += key + ": " + value;
             }
         }
@@ -609,9 +633,9 @@ var HttpHeadersParser = {
                 i = 0;
         for (; i < headersLength; i++) {
             var header = headersList[i];
-            if (!header.name)
+            if (!header.key)
                 continue;
-            if (header.name.toLowerCase().trim() === 'content-type') {
+            if (header.key.toLowerCase().trim() === 'content-type') {
                 if (!header.value)
                     return;
                 foundContentType = header.value;
@@ -636,7 +660,9 @@ RestClientApp.prototype = {
     },
     restoreLatestState: function() {
         var data = {
-            'latestrequest': null
+            'latestrequest': null,
+            'headers_cm': false,
+            'payload_cm': false
         };
         app.localStorage.get(data, function(result) {
             if (!result)
@@ -646,21 +672,28 @@ RestClientApp.prototype = {
                 restored = JSON.parse(result.latestrequest);
             } catch (e) {
             }
-            if (!restored)
-                return;
-
-            if (restored.url) {
-                window.restClientUrlService.value = restored.url;
+            if (restored){
+                if (restored.url) {
+                    window.restClientUrlService.value = restored.url;
+                }
+                if (restored.method) {
+                    $('#HttpMethod' + restored.method).click();
+                }
+                if (restored.headers) {
+                    window.restClientHeadersService.value = restored.headers;
+                }
+                if (restored.payload) {
+                    window.restClientPayloadService.value = restored.payload;
+                }
             }
-            if (restored.method) {
-                $('#HttpMethod' + restored.method).click();
+            if(result.headers_cm){
+                //enable code mirror for headers RAW input
+                enableCodeMirrorForHeaders();
             }
-            if (restored.headers) {
-                window.restClientHeadersService.value = restored.headers;
+            if(result.payload_cm){
+                //enable code mirror for payload RAW input
             }
-            if (restored.payload) {
-                window.restClientPayloadService.value = restored.payload;
-            }
+            
         }.bind(this));
     },
     observePageUnload: function() {
@@ -689,7 +722,7 @@ RestClientApp.prototype = {
         var context = this;
         document.querySelector('#SendRequestButton').addEventListener('click', function(e) {
             e.preventDefault();
-            if (this.getAttribute('disabled') != null)
+            if (this.getAttribute('disabled') !== null)
                 return;
             context.startRequest();
         }, false);
@@ -702,12 +735,12 @@ RestClientApp.prototype = {
     },
     _runRequestObject: function(requestData){
         var req = new XMLHttpRequest();
-        req.open(requestData.method, requestData.url, false);
+        req.open(requestData.method, requestData.url, true);
         
         for(var i=0,len=requestData.headers.len;i<len;i++){
             //TODO: enclode in try...catch block
             var header = requestData.headers[i];
-            req.addRequestHeader(header.name,header.value);
+            req.addRequestHeader(header.key,header.value);
         }
         
         req.addEventListener('load', this._requestLoadEnd.bind(this), false);
@@ -722,16 +755,26 @@ RestClientApp.prototype = {
             }
         } catch(e){
             //TODO
+            console.error('Error during request initialization.', e);
+            window.restClientWebRequest.getRequestData(function(data){
+                console.log('HasRequestErrorData',data);
+            });
         }
     },
     _requestLoadEnd: function(e){
         console.log('_requestLoadEnd', e);
+        window.restClientWebRequest.getRequestData(function(data){
+            console.log('HasRequestData',data);
+        });
     },
     _requestLoadProgress: function(e){
         console.log('_requestLoadProgress', e);
     },
     _requestLoadError: function(e){
         console.log('_requestLoadError', e);
+        window.restClientWebRequest.getRequestData(function(data){
+            console.log('HasRequestErrorData',data);
+        });
     }
 };
 
@@ -750,17 +793,25 @@ window.restClient.initialize();
 (function() {
     document.querySelector('#RunCodeMirrorHeadersAction').addEventListener('click', function(e) {
         e.preventDefault();
-
+        var headers_cm = false;
         if (this.dataset['endabled'] === 'true') {
             window.restClientUI.disbaleHeadersCodeMirror();
             this.dataset['endabled'] = 'false';
-            this.innerHTML = 'Run code mirror editor';
+            this.innerText = 'Run code mirror editor';
         } else {
-            loadCodeMirror(function() {
-                window.restClientUI.enableHeadersCodeMirror();
-                this.dataset['endabled'] = 'true';
-                this.innerHTML = 'Remove code mirror editor';
-            }.bind(this));
+            enableCodeMirrorForHeaders();
+            headers_cm = true;
         }
+        app.localStorage.add({'headers_cm': headers_cm});
     }, false);
 })();
+
+
+function enableCodeMirrorForHeaders(){
+    loadCodeMirror(function() {
+        window.restClientUI.enableHeadersCodeMirror();
+        var anchor = document.querySelector('#RunCodeMirrorHeadersAction');
+        anchor.dataset['endabled'] = 'true';
+        anchor.innerText = 'Remove code mirror editor';
+    }.bind(this));
+}

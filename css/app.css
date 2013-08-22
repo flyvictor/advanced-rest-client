@@ -5,8 +5,12 @@
 #full-request-url {
 -webkit-flex: 1 0 0;
 }
-#url-panel {
-margin-bottom: 0.7em;
+#url-panel,
+#method-panel,
+#HttpHeadersPanel,
+#HttpPayloadPanel,
+#RequestActionsPanel{
+    margin-bottom: 1.5em;
 }
 #url-one-filed {
     display: -webkit-flex;
@@ -153,10 +157,9 @@ margin-bottom: 0.7em;
     font-size: x-small;
     font-style: italic;
     font-weight: bold;
+    margin-top: 12px;
 }
-#HttpHeadersPanel{
-    margin-bottom: 15px;
-}
+
 input[type="file"]{
     line-height: initial;
 }
@@ -183,4 +186,24 @@ input[type="file"]{
 }
 input:invalid, textarea:invalid, select:invalid {
     color: #b94a48;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 30px;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+.query-key.form-control,
+.request-payload-key.form-control,
+.request-header-key.form-control {
+    width: 25%;
+}
+.btn-group.input-group-btn {
+    width: auto;
+}
+.request-payload-file-name.form-control,
+.request-payload-file-field.form-control {
+    width: auto;
 }

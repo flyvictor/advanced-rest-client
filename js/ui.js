@@ -195,6 +195,13 @@ RestClientUI.prototype = {
 
         }.bind(this));
     },
+    /**
+     * Initialize UI tabs.
+     * Handle change to tabs state if needed.
+     * 
+     * 
+     * @returns {undefined}
+     */
     initTabs: function() {
 
         $('.nav-tabs a').click(function(e) {
@@ -205,32 +212,50 @@ RestClientUI.prototype = {
             $('a[data-target="' + target + '"]').tab('show');
         });
 
-        $('a[data-toggle="tab"]').on('shown', function(e) {
+        $('a[data-toggle="tab"]').on('show.bs.tab', function(e) {
             if (e.target.dataset['target']) {
-                var wrap, type;
+                var type;
                 switch (e.target.dataset['target']) {
                     case '#HttpHeadersForm':
-                        wrap = '#HttpHeadersForm > .wrapper';
                         type = 'header';
                         break;
                     case '#HttpPayloadForm':
-                        wrap = '#HttpPayloadForm > .wrapper';
                         type = 'payload';
                         break;
                     case '#HttpPayloadFiles':
-                        wrap = '#HttpPayloadFiles > .wrapper';
                         type = 'file';
                         break;
                 }
-                if (wrap) {
-                    var queryContainer = $(wrap);
-                    if (queryContainer.children().length === 1) {
-                        this.appendHttpDataRow(type);
-                    }
+                if(type){
+                    this.ensureFormHasRow(type);
                 }
             }
         }.bind(this));
     },
+    /**
+     * Be sure that either Headers or Payload form has at least one row
+     * @param {String} type Either "header", "payload" or "file"
+     * @returns {Void}
+     */
+    ensureFormHasRow: function(type){
+        if(!type){
+            throw "Type argument is not specified.";
+        }
+        var wrap;
+        switch (type){
+            case 'header': wrap = '#HttpHeadersForm > .wrapper'; break;
+            case 'payload': wrap = '#HttpPayloadForm > .wrapper'; break;
+            case 'file': wrap = '#HttpPayloadFiles > .wrapper'; break;
+        }
+        if (wrap) {
+            var queryContainer = $(wrap);
+            if (queryContainer.children().length === 1) {
+                this.appendHttpDataRow(type);
+            }
+        }
+    },
+    
+    
     /**
      * Init all tooltips
      * @returns {undefined}
@@ -279,7 +304,7 @@ RestClientUI.prototype = {
     },
     
     disbaleHeadersCodeMirror: function() {
-        if(this.headersCodeMirror != null){
+        if(this.headersCodeMirror !== null){
             this.headersCodeMirror.toTextArea();
             this.headersCodeMirror = null;
         }
@@ -328,7 +353,6 @@ RestClientUI.prototype = {
      * @returns {undefined}
      */
     initRequestHeaders: function() {
-//        this.enableHeadersCodeMirror();
         var context = this;
         $('#HttpHeadersPanel').click(function(e) {
             if (e.target.dataset['action']) {
@@ -433,9 +457,11 @@ RestClientUI.prototype = {
             }
             if (result.headersTab !== '') {
                 $('a[data-target="#' + result.headersTab + '"]').tab('show');
+                this.ensureFormHasRow('header');
             }
             if (result.payloadTab !== '') {
                 $('a[data-target="#' + result.payloadTab + '"]').tab('show');
+                this.ensureFormHasRow('payload');
             }
         }.bind(this));
     },
