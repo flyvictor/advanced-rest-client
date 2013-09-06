@@ -37,7 +37,7 @@ function WebRequest() {
     }
     this.notSupportedW3CHeaders = null;
     this.browserDefaultHeaders = null;
-    chrome.storage.local.get(['notSupportedW3CHeaders', 'browserDefaultHeaders'], function(data) {
+    app.localStorage.get(['notSupportedW3CHeaders', 'browserDefaultHeaders'], function(data) {
         if (data.notSupportedW3CHeaders)
             this.notSupportedW3CHeaders = data.notSupportedW3CHeaders.split(",");
         if (data.browserDefaultHeaders)
@@ -279,11 +279,11 @@ WebRequest.prototype = {
 
         var requestHeadersKeys = [];
         for (i = 0; i < requestHeadersLength; i++) {
-            if(typeof requestHeaders[i].key !== 'undefined'){
-                requestHeaders[i].name = requestHeaders[i].key;
-                delete requestHeaders[i].key;
-            }
-            requestHeadersKeys[requestHeadersKeys.length] = requestHeaders[i].name.toLowerCase();
+//            if(typeof requestHeaders[i].key !== 'undefined'){
+//                requestHeaders[i].name = requestHeaders[i].key;
+//                delete requestHeaders[i].key;
+//            }
+            requestHeadersKeys[requestHeadersKeys.length] = requestHeaders[i].key.toLowerCase();
         }
 
         var removeHeaders = this.browserDefaultHeaders.filter(function(element, index, array) {
@@ -373,9 +373,11 @@ WebRequest.prototype = {
         // create actions
         var actions = [];
         for (var i = 0; i < unsupportedHeadersList.length; i++) {
-            var header = unsupportedHeadersList[i];
-            header.name = header.key;
-            delete header.key;
+            var header_data = unsupportedHeadersList[i];
+            var header = {
+                'name': header_data.key,
+                'value': header_data.value
+            };
             actions[actions.length] = new chrome.declarativeWebRequest.SetRequestHeader(header);
         }
         return actions;

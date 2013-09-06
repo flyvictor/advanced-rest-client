@@ -12,6 +12,7 @@
     "declarativeWebRequest",
     "<all_urls>",
     "storage",
+    "unlimitedStorage",
     "clipboardWrite"
   ],
   "options_page": "index.html#options",

@@ -147,7 +147,7 @@
                 s += param[0];
                 s += '=';
                 if (param[1]) {
-                    s += encodeURIComponent(param[1]);
+                    s += param[1]; //s += encodeURIComponent(param[1]);
                 }
             }
         }

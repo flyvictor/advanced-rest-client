@@ -16,6 +16,7 @@ RestClientUI.prototype = {
         this.restoreUiState();
         this.initTooltips();
         this.observePageUnload();
+        this.handleLeftMenu();
     },
     uiEvent: function(name, details) {
         if (typeof details === 'undefined')
@@ -53,6 +54,23 @@ RestClientUI.prototype = {
                 }
             }
         }.bind(this));
+        var scrollShaddowAdded = false;
+        var nav = document.querySelector('#topNav');
+        //handle page scroll and add shadow
+        $(window).on('scroll', function(e) {
+            if (document.body.scrollTop === 0) {
+                if (scrollShaddowAdded) {
+                    scrollShaddowAdded = false;
+                    nav.classList.remove('activated');
+                }
+            } else {
+                if (!scrollShaddowAdded) {
+                    scrollShaddowAdded = true;
+                    nav.classList.add('activated');
+                }
+            }
+        });
+
     },
     /// Open or close URL editor panel 
     toggleUrlEditor: function(e) {
@@ -85,76 +103,107 @@ RestClientUI.prototype = {
      * @param {String} value If present insert value into text field
      * @returns {undefined}
      */
-    appendUrlQueryParamRow: function(key,value) {
+    appendUrlQueryParamRow: function(key, value) {
         key = key || false;
         value = value || false;
         var content = document.querySelector('#query-editor-param-row-template').content.cloneNode(true);
-        if(key){
+        if (key) {
             content.querySelector('.query-key').value = key;
         }
-        if(value){
+        if (value) {
             content.querySelector('.query-value').value = value;
         }
         var container = document.querySelector('#query-params-container');
         container.appendChild(content);
-        $('.has-tooltip', container).popover({trigger:'hover'});
+        $('.has-tooltip', container).popover({trigger: 'hover'});
     },
-            
-    extractQueryParamsValues: function(containerRow){
+    extractQueryParamsValues: function(containerRow) {
         var key = containerRow.children[0].value;
         var value = containerRow.children[1].value;
         return [key, value];
     },
-    extractQueryParamsInputs: function(containerRow){
+    extractQueryParamsInputs: function(containerRow) {
         var key = containerRow.children[0];
         var value = containerRow.children[1];
         return [key, value];
     },
-    
-    clearAllQueryParamsRows: function(){
-        var paramsContainers = document.querySelectorAll('#query-params-container > .query-param-row');
-        var params = Array.prototype.slice.call(paramsContainers);
-        params.forEach(function(item){
+    clearAllQueryParamsRows: function() {
+        this._clearFormRows('query');
+    },
+    clearAllHttpHeadersRows: function() {
+        this._clearFormRows('header');
+    },
+    clearAllPayloadRows: function() {
+        this._clearFormRows('payload');
+    },
+    clearAllFilesRows: function() {
+        this._clearFormRows('file');
+    },
+    _clearFormRows: function(type) {
+        var paramsContainers, params, query;
+        switch (type) {
+            case 'query':
+                query = '#query-params-container > .query-param-row';
+                break;
+            case 'header':
+                query = '#HttpHeadersForm .request-header-param-row';
+                break;
+            case 'payload':
+                query = '#HttpPayloadForm .request-payload-row';
+                break;
+            case 'file':
+                query = '#HttpPayloadFiles .request-payload-file-row';
+                break;
+        }
+        paramsContainers = document.querySelectorAll(query);
+        params = Array.prototype.slice.call(paramsContainers);
+        params.forEach(function(item) {
             item.parentNode.removeChild(item);
         });
     },
-    
-    clearAllHttpHeadersRows: function(){
-        var paramsContainers = document.querySelectorAll('#HttpHeadersForm .request-header-param-row');
-        var params = Array.prototype.slice.call(paramsContainers);
-        params.forEach(function(item){
-            item.parentNode.removeChild(item);
-        });
+    extractHttpHeadersValues: function(containerRow) {
+        return this._extractFormValues('header', containerRow);
     },
-    extractHttpHeadersValues: function(containerRow){
-        var children = Array.prototype.slice.call(containerRow.children),
-            key, value;
-        children.forEach(function(child){
-            if(child && child.classList){
-                if(child.classList.contains('request-header-key')){
+//    extractHttpHeadersInputs: function(containerRow){
+//        var children = Array.prototype.slice.call(containerRow.children),
+//            key, value;
+//        children.forEach(function(child){
+//            if(child && child.classList){
+//                if(child.classList.contains('request-header-key')){
+//                    key = child;
+//                } else if(child.classList.contains('request-header-value')){
+//                    value = child;
+//                }
+//            }
+//        });
+//        return {key: key, value:value};
+//    },
+    extractPayloadValues: function(containerRow) {
+        return this._extractFormValues('payload', containerRow);
+    },
+    _extractFormValues: function(type, container) {
+        var keyCls, valueCls, key, value, children = Array.prototype.slice.call(container.children);
+        switch (type) {
+            case 'header':
+                keyCls = 'request-header-key';
+                valueCls = 'request-header-value';
+                break;
+            case 'payload':
+                keyCls = 'request-payload-key';
+                valueCls = 'request-payload-value';
+                break;
+        }
+        children.forEach(function(child) {
+            if (child && child.classList) {
+                if (child.classList.contains(keyCls)) {
                     key = child.value;
-                } else if(child.classList.contains('request-header-value')){
+                } else if (child.classList.contains(valueCls)) {
                     value = child.value;
                 }
             }
         });
-        return {key: key, value:value};
+        return {key: key, value: value};
     },
-    extractHttpHeadersInputs: function(containerRow){
-        var children = Array.prototype.slice.call(containerRow.children),
-            key, value;
-        children.forEach(function(child){
-            if(child && child.classList){
-                if(child.classList.contains('request-header-key')){
-                    key = child;
-                } else if(child.classList.contains('request-header-value')){
-                    value = child;
-                }
-            }
-        });
-        return {key: key, value:value};
-    },
-    
     initHttpMethod: function() {
         $('#method-panel').change(function(e) {
             if (!e.target.value) {
@@ -226,7 +275,7 @@ RestClientUI.prototype = {
                         type = 'file';
                         break;
                 }
-                if(type){
+                if (type) {
                     this.ensureFormHasRow(type);
                 }
             }
@@ -237,15 +286,21 @@ RestClientUI.prototype = {
      * @param {String} type Either "header", "payload" or "file"
      * @returns {Void}
      */
-    ensureFormHasRow: function(type){
-        if(!type){
+    ensureFormHasRow: function(type) {
+        if (!type) {
             throw "Type argument is not specified.";
         }
         var wrap;
-        switch (type){
-            case 'header': wrap = '#HttpHeadersForm > .wrapper'; break;
-            case 'payload': wrap = '#HttpPayloadForm > .wrapper'; break;
-            case 'file': wrap = '#HttpPayloadFiles > .wrapper'; break;
+        switch (type) {
+            case 'header':
+                wrap = '#HttpHeadersForm > .wrapper';
+                break;
+            case 'payload':
+                wrap = '#HttpPayloadForm > .wrapper';
+                break;
+            case 'file':
+                wrap = '#HttpPayloadFiles > .wrapper';
+                break;
         }
         if (wrap) {
             var queryContainer = $(wrap);
@@ -254,8 +309,6 @@ RestClientUI.prototype = {
             }
         }
     },
-    
-    
     /**
      * Init all tooltips
      * @returns {undefined}
@@ -302,14 +355,12 @@ RestClientUI.prototype = {
         this.headersCodeMirror.refresh();
         opts = null;
     },
-    
     disbaleHeadersCodeMirror: function() {
-        if(this.headersCodeMirror !== null){
+        if (this.headersCodeMirror !== null) {
             this.headersCodeMirror.toTextArea();
             this.headersCodeMirror = null;
         }
     },
-    
     /**
      * 
      * @param {Array} scriptsList Array of the scripts to load.
@@ -379,36 +430,48 @@ RestClientUI.prototype = {
         key = key || false;
         value = value || false;
         type = type || 'header';
-        var tpl, wrap;
+        var tpl, wrap, keyField, valueField;
         var updateKeyVal = false;
         switch (type) {
             case 'header':
                 tpl = '#http-headers-row-template';
                 wrap = '#HttpHeadersForm > .wrapper';
+                keyField = '.request-header-key';
+                valueField = '.request-header-value';
                 updateKeyVal = true;
                 break;
             case 'payload':
                 tpl = '#http-payload-row-template';
                 wrap = '#HttpPayloadForm > .wrapper';
+                keyField = '.request-payload-key';
+                valueField = '.request-payload-value';
+                updateKeyVal = true;
                 break;
             case 'file':
                 tpl = '#http-payload-file-row-template';
                 wrap = '#HttpPayloadFiles > .wrapper';
+
+                keyField = '.request-payload-file-name';
+                updateKeyVal = true;
                 break;
         }
-        
+
         var content = document.querySelector(tpl).content.cloneNode(true);
-        if(updateKeyVal){
-            if(key){
-                content.querySelector('.request-header-key').value = key;
+        if (updateKeyVal) {
+            if (key) {
+                content.querySelector(keyField).value = key;
             }
-            if(value){
-                content.querySelector('.request-header-value').value = value;
+            if (value) {
+                content.querySelector(valueField).value = value;
             }
         }
         var container = document.querySelector(wrap);
         container.appendChild(content);
         $('.has-tooltip', container).tooltip();
+
+        var eventName = type + '.field.added';
+        var event = this.uiEvent(eventName);
+        container.dispatchEvent(event);
     },
     initRequestPayload: function() {
         var context = this;
@@ -423,10 +486,22 @@ RestClientUI.prototype = {
                         context.appendHttpDataRow('payload');
                         break;
                     case 'remove-payload-file-param':
-                        $(e.target).parents('.request-payload-file-row').remove();
+                        var row = $(e.target).parents('.request-payload-file-row');
+                        var wrapper = row.parent();
+                        row.remove();
+                        if (wrapper.length > 0) {
+                            var event = context.uiEvent('file.field.removed');
+                            wrapper[0].dispatchEvent(event);
+                        }
                         break;
                     case 'remove-payload-param':
-                        $(e.target).parents('.request-payload-row').remove();
+                        var row = $(e.target).parents('.request-payload-row');
+                        var wrapper = row.parent();
+                        row.remove();
+                        if (wrapper.length > 0) {
+                            var event = context.uiEvent('payload.field.removed');
+                            wrapper[0].dispatchEvent(event);
+                        }
                         break;
                 }
             }
@@ -464,7 +539,43 @@ RestClientUI.prototype = {
                 this.ensureFormHasRow('payload');
             }
         }.bind(this));
+        
+        
+        var requestHeadersPanelState = window.sessionStorage['req_head_panel_state'] || "opened";
+        var responseHeadersPanelState = window.sessionStorage['res_head_panel_state'] || "opened";
+        this.setResponseHeadersPanelState('request',requestHeadersPanelState);
+        this.setResponseHeadersPanelState('response',responseHeadersPanelState);
     },
+    
+    setResponseHeadersPanelState: function(type, state){
+        var panel, button, key, wrapper;
+        if(type === 'request'){
+            wrapper = document.querySelector('#requestHeaders');
+            panel = wrapper.querySelector('#requestHeadersPanel');
+            key = 'req_head_panel_state';
+        } else if(type === 'response'){
+            wrapper = document.querySelector('#responseHeaders');
+            panel = wrapper.querySelector('#responseHeadersPanel');
+            key = 'res_head_panel_state';
+        } else {
+            return;
+        }
+        var img_open = '&times;';
+        var img_close = '↶';
+        
+        button = wrapper.querySelector('.close');
+        button.dataset['state'] = state;
+        window.sessionStorage[key] = state;
+        
+        if(state === 'opened'){
+            button.innerHTML = img_open;
+            panel.classList.remove('hidden');
+        } else if(state === 'closed'){
+            button.innerText = img_close;
+            panel.classList.add('hidden');
+        }
+    },
+    
     /**
      * Because of event oriented nature of the application 
      * this is main method which controling an UI.<br/>
@@ -488,24 +599,32 @@ RestClientUI.prototype = {
         var context = this;
         //Form error - disable action buttons
         body.on('formerror', function(e) {
-            var sendButton = document.querySelector('#RequestActionsPanel *[data-action="send-form-action"]');
-            sendButton.classList.remove('disabled');
-            sendButton.removeAttribute('disabled');
-            
+            var sendButtons = document.querySelectorAll('*[data-action="send-form-action"]');
+            var buttons = Array.prototype.slice.call(sendButtons);
+            buttons.forEach(function(button) {
+                button.classList.remove('disabled');
+                button.removeAttribute('disabled');
+            });
             document.getElementById('full-request-url').setCustomValidity("The URL may not be valid.");
         });
         body.on('formnotready', function(e) {
-            var sendButton = document.querySelector('#RequestActionsPanel *[data-action="send-form-action"]');
-            sendButton.classList.add('disabled');
-            sendButton.setAttribute('disabled', true);
-            
+            var sendButtons = document.querySelectorAll('*[data-action="send-form-action"]');
+            var buttons = Array.prototype.slice.call(sendButtons);
+            buttons.forEach(function(button) {
+                button.classList.add('disabled');
+                button.setAttribute('disabled', true);
+            });
+
             document.getElementById('full-request-url').setCustomValidity("");
         });
         body.on('formready', function(e) {
-            var sendButton = document.querySelector('#RequestActionsPanel *[data-action="send-form-action"]');
-            sendButton.classList.remove('disabled');
-            sendButton.removeAttribute('disabled');
-            
+            var sendButtons = document.querySelectorAll('*[data-action="send-form-action"]');
+            var buttons = Array.prototype.slice.call(sendButtons);
+            buttons.forEach(function(button) {
+                button.classList.remove('disabled');
+                button.removeAttribute('disabled');
+            });
+
             document.getElementById('full-request-url').setCustomValidity("");
         });
 
@@ -537,6 +656,71 @@ RestClientUI.prototype = {
         } else {
             document.querySelector('#HttpMethodOTHERValue').setAttribute('disabled', true);
         }
+    },
+    /**
+     * Reset panels in response view to it's initial state.
+     * @returns {Void}
+     */
+    resetResponseView: function() {
+        //hide all tabs buttons
+        document.querySelector('a[href="#xmlResponseTab"]').classList.add('hidden');
+        document.querySelector('a[href="#jsonResponseTab"]').classList.add('hidden');
+        document.querySelector('a[href="#binaryResponseTab"]').classList.add('hidden');
+        document.querySelector('a[href="#parsedResponseTab"]').classList.add('hidden');
+
+        //clean response panels
+        document.querySelector('#rawResponseCode').innerHTML = '';
+        document.querySelector('#CMHtmlPanel .cm-s-default').innerHTML = '';
+        document.querySelector('#JsonHtmlPanel').innerHTML = '';
+        document.querySelector('#XmlHtmlPanel').innerHTML = '';
+
+        //show default tab
+        $('a[href="#rawResponseTab"]').tab('show');
+
+        document.querySelector('#response-panel').classList.remove('hidden');
+        document.querySelector('#responseBodyPanels').classList.remove('hidden');
+    },
+    /**
+     * Set response state depanding on response's status code
+     * @param {String} state Either "ok", "warning" or "error"
+     * @returns {Void}
+     */
+    setResponseStatusState: function(state) {
+        var panelCls, labelCls;
+        switch (state) {
+            case 'ok':
+                panelCls = 'panel panel-success';
+                labelCls = 'label label-success';
+                break;
+            case 'warning':
+                panelCls = 'panel panel-warning';
+                labelCls = 'label label-warning';
+                break;
+            case 'error':
+                panelCls = 'panel panel-danger';
+                labelCls = 'label label-danger';
+                break;
+            default:
+                return;
+        }
+        var statusPanel = document.querySelector('#responseStatusPanel');
+        var responseStatusValue = document.querySelector('#responseStatusValue');
+        var headStatusValue = document.querySelector('#headStatusValue');
+        responseStatusValue.className = labelCls;
+        headStatusValue.className = labelCls;
+        statusPanel.className = panelCls;
+    },
+    handleLeftMenu: function() {
+        var menuTriggers = $('.left-menu-trigger');
+        var menuPanel = $('#leftnav');
+        menuTriggers.on('mouseover', function(e) {
+            menuPanel.addClass('active');
+        });
+        menuPanel.on('mouseout', function(e) {
+            if (e.toElement && e.toElement.id !== 'leftnav' && $(e.toElement).parents('#leftnav').length === 0) {
+                menuPanel.removeClass('active');
+            }
+        });
     }
 };
 
