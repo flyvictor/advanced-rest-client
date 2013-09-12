@@ -64,7 +64,6 @@ UrlFieldService.prototype = {
         this.runTypehead();
         panel.addEventListener('keydown', function(e){
             if(e.keyCode !== 13) return;
-            console.log('enter presss')
             this._enterPress(e);
         }.bind(this), false);
     },
@@ -824,7 +823,7 @@ function loadCodeMirror(callback) {
         }
         var ga = document.createElement('script');
         ga.type = 'text/javascript';
-        ga.src = root + sc;
+        ga.src = chrome.runtime.getURL(root + sc);
         ga.onload = function() {
             window.setTimeout(next, 1);
         };
@@ -911,20 +910,53 @@ var HttpHeadersParser = {
 };
 
 function RestClientApp() {
-    this.requestStart = 0;
-    this.requestEnd = 0;
-    this.responseURL = null;
-    this.rawResponseBody = '';
+    this.reset();
+    this.router = null;
 }
 RestClientApp.prototype = {
     constructor: RestClientApp,
     initialize: function() {
+        //initialize routers
+        this.initializeRouter();
         //restore latest request;
+        //TODO: to remove. Now the router will decide what to do
         this.restoreLatestState();
         this.observePageUnload();
         this.observeFormActions();
         this.observeResponsePanelActions();
     },
+    reset: function(){
+        this.requestStart = 0;
+        this.requestEnd = 0;
+        /**
+         * Requested by the user URL.
+         */
+        this.requestURL = null;
+        /**
+         * Final response URL.
+         * Note: it may be different than this.requestURL in case of redirect.
+         */
+        this.responseURL = null;
+        this.currentResponse = null;
+        this._historyId = null;
+    },
+    
+    get historyId(){
+        return this._historyId;
+    },
+    
+    set historyId(id){
+      this._historyId = id;
+      if(this.currentResponse !== null){
+          window.restClientRequestsStorage.saveHistoryResponse(id, this.currentResponse);
+      }
+    },
+    
+    initializeRouter: function(){
+        this.router = new AppRouter();
+        this.router.initialize();
+    },
+    
     restoreLatestState: function() {
         var data = {
             'latestrequest': null,
@@ -1029,9 +1061,16 @@ RestClientApp.prototype = {
         
     },
     startRequest: function() {
+        //show "request" page
+        window.restClient.router.router.navigate('/index.html?request');
+        logGroup('HTTP Request logs');
+        this.reset();
         var requestData = this.prepareRequestData();
         window.restClientWebRequest.prepareRequest(requestData, function() {
-            this.storeRequestHistory(requestData);
+            window.restClientRequestsStorage.saveHistory(requestData, function(saveId){
+                this.historyId = saveId;
+            }.bind(this));
+            this.requestURL = requestData.url;
             this._runRequestObject(requestData);
         }.bind(this));
     },
@@ -1091,9 +1130,20 @@ RestClientApp.prototype = {
         window.restClientWebRequest.reset();
         $('body').trigger('request.end');
         console.log('_completeRequest','transport',transport,'data',collectedData,'error',isError);
+        logGroupEnd();
         
-        this.responseURL = collectedData.URL;
+        this.responseURL = collectedData.FINAL_URL;
         window.restClientUI.resetResponseView();
+        
+        this.currentResponse = collectedData;
+        this.currentResponse.response = transport.response;
+        this.currentResponse.status = transport.status;
+        this.currentResponse.statusText = transport.statusText;
+        
+        if(this._historyId != null){
+            window.restClientRequestsStorage.saveHistoryResponse(this._historyId, this.currentResponse);
+        }
+        
         
         //STATUS PANEL
         var requestTime = Math.round(this.requestEnd - this.requestStart);
@@ -1132,12 +1182,10 @@ RestClientApp.prototype = {
         this.fillHeadersData('response',collectedData.RESPONSE_HEADERS);
         this._fillRedirectsPanel(collectedData.REDIRECT_DATA);
         
-        this.rawResponseBody = transport.response;
-        
         //request body
         var rawResponseCode = document.querySelector('#rawResponseCode');
         
-        if(!this.rawResponseBody || this.rawResponseBody.trim().isEmpty()){
+        if(!this.currentResponse.response || this.currentResponse.response.trim().isEmpty()){
             $('#rawResponseTab .parsed-options-panel:visible').hide();
             rawResponseCode.innerHTML = '<i class="response-no-data">Response does not contain any data</i>';
             return;
@@ -1145,7 +1193,7 @@ RestClientApp.prototype = {
             $('#rawResponseTab .parsed-options-panel:hidden').show();
         }
         
-        rawResponseCode.innerText = this.rawResponseBody;
+        rawResponseCode.innerText = this.currentResponse.response;
         
         //check if request is an XML request
         var xmlData = transport.responseXML;
@@ -1584,125 +1632,6 @@ RestClientApp.prototype = {
             
             panel.appendChild(content);
         }
-                /*fromCache: true
-            redirectUrl: "http://www.wp.pl/"
-            responseHeaders: Array[4]
-            0: Object
-            1: Object
-            2: Object
-            3: Object
-            length: 4
-            __proto__: Array[0]
-            statusCode: 301
-            statusLine: "HTTP/1.1 301 Moved Permanently"*/
-    },
-    
-    storeRequestHistory: function(requestData){
-        
-        //check if the same request already exists
-        var keyRange,
-        options = {};
-        var options = {};
-        options.lower = requestData.url;
-        options.upper = requestData.url;
-        keyRange = window.restClientStore.history.makeKeyRange(options);
-        var result = [];
-        var onItem = function(item) {
-            result[result.length] = item;
-        };
-        var insert = function(data){
-            var fileFieldNames = [];
-            data.files.forEach(function(file){
-                fileFieldNames[fileFieldNames.length] = file.key;
-            });
-            
-            var saveData = {
-                'url': data.url,
-                'time': Date.now(),
-                'hit': 1,
-                'payload': data.payload,
-                'files': fileFieldNames,
-                'headers': data.headers,
-                'method': data.method
-            };
-            window.restClientStore.history.put(saveData);
-        };
-        var onEnd = function() {
-            if(result.length === 0){
-                insert(requestData);
-                return;
-            }
-            
-            var ins = false;
-            var updateItem = null;
-            for(var i=0, len = result.length; i<len; i++){
-                var item = result[i];
-                if(item.url !== requestData.url){
-                    continue;
-                }
-                
-                if(item.payload !== requestData.payload){
-                    ins = true;
-                    break;
-                }
-                if(item.method !== requestData.method){
-                    ins = true;
-                    break;
-                }
-                if(requestData.files.length !== item.files.length){
-                    ins = true;
-                } else {
-                    //check files names array
-                    requestData.files.forEach(function(fileData){
-                        if(item.files.indexOf(fileData.key) === -1){
-                            ins = true;
-                        }
-                    });
-                }
-                
-                var headers = requestData.headers;
-                var checkHeaders = item.headers;
-                if(headers.length !== checkHeaders.length){
-                    ins = true;
-                } else {
-                    for(var i=0, len=headers.length; i<len; i++){
-                        var headerData = headers[i];
-                        var key = headerData.key;
-                        var found = false;
-                        for(var j=0, jLen=checkHeaders.length; j<jLen; j++){
-                            if(checkHeaders[j].key === key){
-                                found = true;
-                                break;
-                            }
-                        }
-                        if(!found){
-                            ins = true;
-                            break;
-                        }
-                    }
-                }
-                if(ins){
-                    break;
-                } else {
-                    updateItem = item;
-                    break;
-                }
-            }
-            if(ins){
-                insert(requestData);
-            } else if(updateItem){
-                updateItem.hit++;
-                updateItem.time = Date.now();
-                window.restClientStore.history.put(updateItem);
-            }
-        };
-        window.restClientStore.history.iterate(onItem, {
-            index: 'url',
-            keyRange: keyRange,
-            filterDuplicates: true,
-            onEnd: onEnd,
-            autoContinue: true
-        });
     },
     
     observeResponsePanelActions: function(){
@@ -1730,11 +1659,11 @@ RestClientApp.prototype = {
                     
                     break;
                 case 'copy-to-clipboard':
-                    copyText(this.rawResponseBody);
+                    copyText(this.currentResponse.response);
                     break;
                 case 'response-in-new-tab':
                     var wnd = window.open();
-                    wnd.document.body.innerHTML = this.rawResponseBody;
+                    wnd.document.body.innerHTML = this.currentResponse.response;
                     break;
                 default: return;
             }
@@ -1774,6 +1703,7 @@ window.restClientPayloadService = new PayloadInputService();
 window.restClientPayloadService.initialize();
 window.restClient = new RestClientApp();
 window.restClient.initialize();
+window.restClientRequestsStorage = new RequestsStorage(window.restClientStore);
 
 (function() {
     document.querySelector('#RunCodeMirrorHeadersAction').addEventListener('click', function(e) {

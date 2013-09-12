@@ -1,5 +1,5 @@
 var debug = true;
-
+//hat's this???
 var islogGroup = false;
 function log() {
     if (!debug)

@@ -87,7 +87,8 @@ WebRequest.prototype = {
             RESPONSE_HEADERS: this.responseHeaders,
             REQUEST_HEADERS: this.requestHeaders,
             REDIRECT_DATA: this.redirectData,
-            ERROR: this.errorData
+            ERROR: this.errorData,
+            FINAL_URL: this.redirectURL || this.masterURL
         };
         clb.call(window,requestDetails);
     },

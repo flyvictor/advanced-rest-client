@@ -20,7 +20,6 @@
 
 
         <nav class="navbar navbar-default navbar-fixed-top" id="topNav" role="navigation">
-            
             <div class="row">
                 <div id="MenuTriggerLogo" class="col-md-2">
                     <span class="app-logo left-menu-trigger">
@@ -36,26 +35,26 @@
                             </span>
                             <input type="text" class="form-control" id="full-request-url" placeholder="enter HTTP request URL here">
                             <div class="input-group-btn">
-                                <button type="button" class="btn btn-primary" tabindex="-1" data-action="send-form-action">Send</button>
+                                <button type="button" class="btn btn-primary" tabindex="0" data-action="send-form-action">Send</button>
                                 <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" tabindex="-1">
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu pull-right" role="menu">
-                                    <li role="menuitem"><a href="#">Clear form</a></li>
+                                    <li role="menuitem"><a href="#" tabindex="-1">Clear form</a></li>
                                     <li class="divider"></li>
-                                    <li role="menuitem"><a href="#">Open</a></li>
-                                    <li role="menuitem"><a href="#">Save</a></li>
+                                    <li role="menuitem"><a href="#" tabindex="-1">Open</a></li>
+                                    <li role="menuitem"><a href="#" tabindex="-1">Save</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="" id="url-editor">
-                            <input class="form-control" id="url-editor-path" type="text" placeholder="enter path (e.g. /my/path/to/api/endpoint/)">
+                            <input tabindex="-1" data-tabindex="change" class="form-control" id="url-editor-path" type="text" placeholder="enter path (e.g. /my/path/to/api/endpoint/)">
                             <div class="query-params-section" id="query-params-container">
                                 <div class="query-parameters-header">
-                                    Query parameters: <a href="about:blank" class="" data-action="query-parameters-add">Add</a>
+                                    Query parameters: <a tabindex="-1" data-tabindex="change" href="about:blank" class="" data-action="query-parameters-add">Add</a>
                                 </div>
                             </div>
-                            <input class="form-control" id="url-editor-hash" type="text" placeholder="enter hash tag here (e.g. #section)">
+                            <input tabindex="-1" data-tabindex="change" class="form-control" id="url-editor-hash" type="text" placeholder="enter hash tag here (e.g. #section)">
                         </div>
                         <div class="request-loader hidden"><img src="img/mini-loader.gif" alt="loading" title="loading"/></div>
                     </div>
@@ -84,20 +83,19 @@
             <div class="left-nav-wrapper">
                 <span id="debug"></span>
                 <ul class="left-nav-list">
-                    <li class="active"><a href="about:blank" data-action="request"><span class="menu-icon"><span class="icon-request"></span></span><span class="menu-item-name">Request</span></a></li>
-                    <li><a href="about:blank" data-action="socket"><span class="menu-icon"><span class="icon-socket"></span></span><span class="menu-item-name">Socket</span></a></li>
-                    <li><a href="about:blank" data-action="saved"><span class="menu-icon"><span class="icon-saved"></span></span><span class="menu-item-name">Saved</span></a></li>
-                    <li><a href="about:blank" data-action="projects"><span class="menu-icon"><span class="icon-project"></span></span><span class="menu-item-name">Projects</span></a></li>
-                    <li><a href="about:blank" data-action="settings"><span class="menu-icon"><span class="icon-settings"></span></span><span class="menu-item-name">Settings</span></a></li>
-                    <li><a href="about:blank" data-action="about">About</a></li>
+                    <li class="active"><a tabindex="-1" href="#/index.html?request" data-action="request"><span class="menu-icon"><span class="icon-request"></span></span><span class="menu-item-name">Request</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?history" data-action="history"><span class="menu-icon"><span class="icon-saved"></span></span><span class="menu-item-name">History</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?saved" data-action="saved"><span class="menu-icon"><span class="icon-saved"></span></span><span class="menu-item-name">Saved</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?projects" data-action="projects"><span class="menu-icon"><span class="icon-project"></span></span><span class="menu-item-name">Projects</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?socket" data-action="socket"><span class="menu-icon"><span class="icon-socket"></span></span><span class="menu-item-name">Socket</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?settings" data-action="settings"><span class="menu-icon"><span class="icon-settings"></span></span><span class="menu-item-name">Settings</span></a></li>
+                    <li><a tabindex="-1" href="#/index.html?about" data-action="about">About</a></li>
                 </ul>
             </div>
         </div>
         
-        
-        <div class="container">
+        <div class="container page active" id="page-request">
             <div class="row">
-                
                 <div class="col-md-12">
                     <section id="request-panel">
                         <div id="method-panel" class="flex">
@@ -270,60 +268,68 @@
                                 </div>
                             </div>
                         </div>
-                        
-                    </section>
-                </div>
-                <div class="col-md-12 hidden" id="responseBodyPanels">
-                    <div id="responsePanel" class="row responsePanelsRow">
-                        
-                        <ul class="nav nav-tabs">
-                            <li class="active"><a href="#rawResponseTab" data-toggle="tab">Raw data</a></li>
-                            <li><a class="hidden" href="#parsedResponseTab" data-toggle="tab">Parsed</a></li>
-                            <li><a class="hidden" href="#jsonResponseTab" data-toggle="tab">JSON</a></li>
-                            <li><a class="hidden" href="#xmlResponseTab" data-toggle="tab">XML</a></li>
-                            <li><a class="hidden" href="#binaryResponseTab" data-toggle="tab">Binnary data</a></li>
-                        </ul>
-                        <div class="tab-content">
-                            <div class="tab-pane active" id="rawResponseTab">
-                                <div class="parsed-options-panel">
-                                    <div class="btn-group btn-group-xs">
-                                        <button data-action="save-as-file" type="button" class="btn btn-default">Save as file</button>
-                                        <button data-action="force-json-tab" type="button" class="btn btn-default">Open in JSON tab</button>
-                                        <button data-action="copy-to-clipboard" type="button" class="btn btn-default">Copy to clipboard</button>
-                                        <button data-action="response-in-new-tab" type="button" class="btn btn-default">Open response in new window</button>
+                        <div class="hidden" id="responseBodyPanels">
+                            <div id="responsePanel" class="row responsePanelsRow">
+
+                                <ul class="nav nav-tabs">
+                                    <li class="active"><a href="#rawResponseTab" data-toggle="tab">Raw data</a></li>
+                                    <li><a class="hidden" href="#parsedResponseTab" data-toggle="tab">Parsed</a></li>
+                                    <li><a class="hidden" href="#jsonResponseTab" data-toggle="tab">JSON</a></li>
+                                    <li><a class="hidden" href="#xmlResponseTab" data-toggle="tab">XML</a></li>
+                                    <li><a class="hidden" href="#binaryResponseTab" data-toggle="tab">Binnary data</a></li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="rawResponseTab">
+                                        <div class="parsed-options-panel">
+                                            <div class="btn-group btn-group-xs">
+                                                <button data-action="save-as-file" type="button" class="btn btn-default">Save as file</button>
+                                                <button data-action="force-json-tab" type="button" class="btn btn-default">Open in JSON tab</button>
+                                                <button data-action="copy-to-clipboard" type="button" class="btn btn-default">Copy to clipboard</button>
+                                                <button data-action="response-in-new-tab" type="button" class="btn btn-default">Open response in new window</button>
+                                            </div>
+                                        </div>
+                                        <code id="rawResponseCode"></code>
+                                    </div>
+                                    <div class="tab-pane" id="parsedResponseTab">
+                                        <div class="parsed-options-panel">
+                                            <div class="btn-group btn-group-xs">
+                                                <button data-action="save-as-file" type="button" class="btn btn-default">Save as file</button>
+                                                <button data-action="force-json-tab" type="button" class="btn btn-default">Open in JSON tab</button>
+                                                <button data-action="copy-to-clipboard" type="button" class="btn btn-default">Copy to clipboard</button>
+                                                <button data-action="response-in-new-tab" type="button" class="btn btn-default">Open response in new window</button>
+                                            </div>
+                                        </div>
+                                        <div id="CMHtmlPanel" class="CodeMirror noborder">
+                                            <pre class="cm-s-default"></pre>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="jsonResponseTab">
+                                        <div id="JsonHtmlPanel" class="JSON_parser_bodyPanel"></div>
+                                    </div>
+                                    <div class="tab-pane" id="xmlResponseTab">
+                                        <div id="XmlHtmlPanel" class="XML_parser_bodyPanel"></div>
+                                    </div>
+                                    <div class="tab-pane" id="binaryResponseTab">
+                                        <!-- no idea how to approach... -->
                                     </div>
                                 </div>
-                                <code id="rawResponseCode"></code>
-                            </div>
-                            <div class="tab-pane" id="parsedResponseTab">
-                                <div class="parsed-options-panel">
-                                    <div class="btn-group btn-group-xs">
-                                        <button data-action="save-as-file" type="button" class="btn btn-default">Save as file</button>
-                                        <button data-action="force-json-tab" type="button" class="btn btn-default">Open in JSON tab</button>
-                                        <button data-action="copy-to-clipboard" type="button" class="btn btn-default">Copy to clipboard</button>
-                                        <button data-action="response-in-new-tab" type="button" class="btn btn-default">Open response in new window</button>
-                                    </div>
-                                </div>
-                                <div id="CMHtmlPanel" class="CodeMirror noborder">
-                                    <pre class="cm-s-default"></pre>
-                                </div>
-                            </div>
-                            <div class="tab-pane" id="jsonResponseTab">
-                                <div id="JsonHtmlPanel" class="JSON_parser_bodyPanel"></div>
-                            </div>
-                            <div class="tab-pane" id="xmlResponseTab">
-                                <div id="XmlHtmlPanel" class="XML_parser_bodyPanel"></div>
-                            </div>
-                            <div class="tab-pane" id="binaryResponseTab">
-                                <!-- no idea how to approach... -->
+
                             </div>
                         </div>
-                        
-                    </div>
+                    </section>
+                </div>
+                
+            </div>
+        </div>
+        <div class="container page hidden" id="page-history">
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>Requests history</h1>
+                    
+                    
                 </div>
             </div>
         </div>
-
         <!-- 
             HTML templates.
         -->
@@ -332,14 +338,14 @@
             <input class="query-key form-control" type="text" placeholder="key">
             <input class="query-value form-control" type="text" placeholder="value">
             <div class="btn-group input-group-btn hidden-sm hidden-xs editor-buttons-group">
-                <button class="btn btn-default has-tooltip" data-action="remove-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">remove</button>
-                <button class="btn btn-default has-tooltip" data-action="encode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Encode URL component. Use CTRL to replace + with %20" title="Encode value">encode</button>
-                <button class="btn btn-default has-tooltip" data-action="decode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Decode URL component. Use CTRL to replace %20 with +" title="Decode value">decode</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="remove-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">remove</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="encode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Encode URL component. Use CTRL to replace + with %20" title="Encode value">encode</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="decode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Decode URL component. Use CTRL to replace %20 with +" title="Decode value">decode</button>
             </div>
             <div class="btn-group input-group-btn visible-sm visible-xs">
-                <button class="btn btn-default has-tooltip" data-action="remove-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">x</button>
-                <button class="btn btn-default has-tooltip" data-action="encode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Encode URL component. Use CTRL to replace + with %20">enc</button>
-                <button class="btn btn-default has-tooltip" data-action="decode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Decode URL component. Use CTRL to replace %20 with +">dec</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="remove-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="top" data-delay='{"show":700,"hide":0}' data-html="false" data-content="Remove this param from the editor." title="Remove param">x</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="encode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Encode URL component. Use CTRL to replace + with %20">enc</button>
+                <button tabindex="-1" class="btn btn-default has-tooltip" data-action="decode-query-param" type="button" data-container="body" data-toggle="tooltip" data-placement="left" data-delay='{"show":700,"hide":0}' title="Decode URL component. Use CTRL to replace %20 with +">dec</button>
             </div>
         </div>
     </template>
@@ -411,8 +417,15 @@
     <script src="js/jquery.1.10.1.js"></script>
     <script src="js/bootstrap-3.0.0/bootstrap.min.js"></script>
     <!--<script src="js/typeahead.js"></script>-->
+    
+    <!-- Router -->
+    <script src="js/history.js/jquery.history.js"></script>
+    <script src="js/Router.js"></script>
+    <script src="js/approuting.js"></script>
 
     <script src="js/declarativeWebRequest.js"></script>
+    <script src="js/apphelper.js"></script>
+    <script src="js/requestsStorage.js"></script>
     <script src="js/uri/Uri.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/logic.js"></script>

@@ -79,12 +79,14 @@ RestClientUI.prototype = {
         if (container.length === 0)
             return;
 
+        var elements = $('#url-panel [data-tabindex="change"]');
         var fullUrlField = $('#full-request-url');
         if (container.hasClass('expanded')) {
             container.trigger('toggle', ['Custom', 'before-close']);
             //close
             container.removeClass('expanded');
             fullUrlField.attr('placeholder', 'enter HTTP request URL here');
+            elements.attr('tabindex','-1');
         } else {
             container.trigger('toggle', ['Custom', 'before-open']);
             //open
@@ -95,6 +97,7 @@ RestClientUI.prototype = {
             if (queryContainer.children().length === 1) {
                 this.appendUrlQueryParamRow();
             }
+            elements.attr('tabindex','0');
         }
     },
     /**
@@ -721,6 +724,40 @@ RestClientUI.prototype = {
                 menuPanel.removeClass('active');
             }
         });
+    },
+    /**
+     * Show [newPage] part of the app.
+     * @param {String} newPage Page to show
+     * @returns {Void}
+     */
+    showPage: function(newPage){
+        var query;
+        switch(newPage){
+            case 'request':
+                query = '#page-request';
+                
+            break;
+            case 'history': 
+                query = '#page-history'; 
+                break;
+            case 'saved': query = ''; break;
+            case 'settings': query = ''; break;
+            case 'about': query = ''; break;
+            case 'socket': query = ''; break;
+        }
+        if(!query) return;
+        var active = document.querySelector('.container.page.active')
+        if("#"+active.id === query) return;
+        var page = document.querySelector(query);
+        if(!page) return;
+        
+        //hide previous one
+        
+        active.classList.add('hidden');
+        active.classList.remove('active');
+        
+        page.classList.remove('hidden');
+        page.classList.add('active');
     }
 };
 

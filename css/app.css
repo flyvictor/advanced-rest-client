@@ -178,7 +178,7 @@ input[type="file"]{
 }
 #RawHeadersActions {
     position: absolute;
-    bottom: -7px;
+    bottom: -15px;
     left: 0;
     font-size: 11px;
     opacity: 0;
@@ -550,6 +550,7 @@ h1.nav-h1{
     height: 44px;
     padding: 0 0 0 20px;
     text-decoration: none;
+    outline: none;
 }
 .left-nav-list .menu-item-name{
     color: #737373;
