@@ -18,18 +18,7 @@ RestClientUI.prototype = {
         this.observePageUnload();
         this.handleLeftMenu();
     },
-    uiEvent: function(name, details) {
-        if (typeof details === 'undefined')
-            details = {};
-
-        var opt = {
-            detail: details,
-            bubbles: true,
-            cancelable: true
-        };
-
-        return new CustomEvent(name, opt);
-    },
+    uiEvent: createCustomeEvent,
     /// Initialize URL panel with URL editor
     initUrlField: function() {
         var urlContainer = $('#url-panel');

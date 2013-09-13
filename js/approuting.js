@@ -7,39 +7,50 @@ function AppRouter() {
 AppRouter.prototype = {
     constructor: AppRouter,
     initialize: function() {
-        this.requestsRoutes();
         this.appRoutes();
-        
         this.router.start();
-    },
-    requestsRoutes: function() {
-        this.router.route('', function() {
-            window.restClientUI.showPage('request');
-        });
-        this.router.route('/index.html\\?request', function() {
-            window.restClientUI.showPage('request');
-        });
-        this.router.route('/index.html\\?request/:source/:id', function(source, id) {
-            window.restClientUI.showPage('request');
-        });
-        
     },
     
     appRoutes: function(){
+        
+        var firePageChangeEvent = function(page, details){
+            details = details || null;
+            var event = createCustomeEvent('pagechangeevent', {
+                'page': page,
+                'details': details
+            });
+            document.querySelector('body').dispatchEvent(event);
+        };
+        
+        
+        this.router.route('/index.html', function() {
+            firePageChangeEvent('request');
+        });
+        this.router.route('/index.html\\?request', function() {
+            firePageChangeEvent('request');
+        });
+        this.router.route('/index.html\\?request/:source/:id', function(source, id) {
+            firePageChangeEvent('request', {source: source, id: id});
+        });
+        
         this.router.route('/index.html\\?history', function() {
-            window.restClientUI.showPage('history');
+            firePageChangeEvent('history');
         });
         this.router.route('/index.html\\?settings', function() {
-            window.restClientUI.showPage('settings');
+            firePageChangeEvent('settings');
+//            window.restClientUI.showPage('settings');
         });
         this.router.route('/index.html\\?about', function() {
-            window.restClientUI.showPage('about');
+            firePageChangeEvent('about');
+//            window.restClientUI.showPage('about');
         });
         this.router.route('/index.html\\?socket', function() {
-            window.restClientUI.showPage('socket');
+            firePageChangeEvent('socket');
+//            window.restClientUI.showPage('socket');
         });
         this.router.route('/index.html\\?saved', function() {
-            window.restClientUI.showPage('saved');
+            firePageChangeEvent('saved');
+//            window.restClientUI.showPage('saved');
         });
     }
-}
+};

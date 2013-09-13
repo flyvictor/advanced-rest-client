@@ -57,7 +57,7 @@ AppInstaller.prototype = {
             DEBUG_ENABLED: null, //key to delete
             MAGICVARS_ENABLED: null,
             NOTIFICATIONS_ENABLED: null
-        }
+        };
         
         chrome.storage.sync.get(syncValues, function(data) {
             //items stored internally by previous version
@@ -72,7 +72,7 @@ AppInstaller.prototype = {
                 'detailedurlpanel': false,
                 "headersTab": "HttpHeadersRaw",
                 "payloadTab": "HttpPayloadRaw"
-            }
+            };
             
             if(data.CMH_ENABLED === true){
                 syncValuesSet.headers_cm = true;
@@ -109,16 +109,14 @@ AppInstaller.prototype = {
             "headersTab": "HttpHeadersRaw",
             "payloadTab": "HttpPayloadRaw",
             "headers_cm": true,
-            "payload_cm": true
-        }
+            "payload_cm": true,
+            'latestrequest': JSON.stringify({'url':'https://gdata.youtube.com/feeds/api/playlists/OU2XLYxmsIKNXidK5HZsHu9T7zs6nxwK/?v=2&alt=json&feature=plcp'})
+        };
         
         chrome.storage.sync.set(syncValuesSet, function(){
             console.log('Sync storage values set.');
         });
-        
-        
-        
-         this._addAssetsToDb();
+        this._addAssetsToDb();
     },
     
     _addAssetsToDb: function(){
