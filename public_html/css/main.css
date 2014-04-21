@@ -1,0 +1,61 @@
+html, body, ul, ol {
+  margin: 0;
+  padding: 0; }
+
+html {
+  overflow: auto; }
+
+body {
+  font: 100% Helvetica, sans-serif;
+  color: #333333; }
+
+html, body {
+  height: 100%;
+  margin: 0; }
+
+#appContainer {
+  display: flex;
+  align-content: stretch;
+  flex-direction: row;
+  height: 100%; }
+#appContainer #appNav {
+  width: 80px;
+  background-color: #333333; }
+#appContainer #appNav menu {
+  margin: 0;
+  padding: 0;
+  list-style: none; }
+#appContainer #appNav menu li {
+  color: #fff;
+  height: 60px;
+  align-items: flex-end;
+  display: flex;
+  justify-content: center;
+  padding: 5px 0;
+  border-bottom: 1px #666666 solid;
+  cursor: pointer; }
+#appContainer #appNav menu li.selected, #appContainer #appNav menu li.selected:hover {
+  background-color: #5A5A5A; }
+#appContainer #appNav menu li:hover {
+  background-color: #3f3f3f; }
+#appContainer .container {
+  flex: 1; }
+
+.headerRow {
+  display: flex; }
+.headerRow input[name="headerName"] {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  width: 35%;
+  min-width: 150px;
+  flex: 0 0 auto; }
+.headerRow input[name="headerValue"] {
+  border-radius: 0;
+  margin-left: -1px;
+  flex: 0 1 auto; }
+.headerRow button[name="headerRemove"] {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  margin-left: -1px;
+  min-width: 75px;
+  flex: 0 0 auto; }

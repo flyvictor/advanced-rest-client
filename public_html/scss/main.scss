@@ -1,0 +1,74 @@
+@import 'reset';
+@import 'defs';
+
+html{
+    overflow: auto;
+}
+body {
+    font: 100% $font-main;
+    color: $primary-color;
+}
+html, body{
+    height:100%;
+    margin:0;
+}
+#appContainer{
+    display: flex;
+    align-content: stretch;
+    flex-direction: row;
+    height: 100%;
+    
+    #appNav{
+        width: 80px;
+        background-color: #333333;
+        
+        menu{
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            
+            li{
+                color: #fff;
+                height: 60px;
+                align-items: flex-end;
+                display: flex;
+                justify-content: center;
+                padding: 5px 0;
+                border-bottom: 1px #666666 solid;
+                cursor: pointer;
+            }
+            li.selected,li.selected:hover{
+                background-color: #5A5A5A;
+            }
+            li:hover{
+                background-color: rgb(63, 63, 63);
+            }
+        }
+    }
+    .container{
+        flex: 1;
+    }
+}
+
+.headerRow{
+    display: flex;
+    input[name="headerName"]{
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        width: 35%;
+        min-width: 150px;
+        flex: 0 0 auto;
+    }
+    input[name="headerValue"]{
+        border-radius: 0;
+        margin-left: -1px;
+        flex: 0 1 auto;
+    }
+    button[name="headerRemove"]{
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        margin-left: -1px;
+        min-width: 75px;
+        flex: 0 0 auto;
+    }
+}
