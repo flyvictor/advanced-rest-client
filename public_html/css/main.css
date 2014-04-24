@@ -26,7 +26,6 @@ html, body {
   padding: 0;
   list-style: none; }
 #appContainer #appNav menu li {
-  color: #fff;
   height: 60px;
   align-items: flex-end;
   display: flex;
@@ -34,6 +33,8 @@ html, body {
   padding: 5px 0;
   border-bottom: 1px #666666 solid;
   cursor: pointer; }
+#appContainer #appNav menu li a {
+  color: #fff; }
 #appContainer #appNav menu li.selected, #appContainer #appNav menu li.selected:hover {
   background-color: #5A5A5A; }
 #appContainer #appNav menu li:hover {

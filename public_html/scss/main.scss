@@ -28,7 +28,7 @@ html, body{
             list-style: none;
             
             li{
-                color: #fff;
+                
                 height: 60px;
                 align-items: flex-end;
                 display: flex;
@@ -36,6 +36,9 @@ html, body{
                 padding: 5px 0;
                 border-bottom: 1px #666666 solid;
                 cursor: pointer;
+                a{
+                    color: #fff;
+                }
             }
             li.selected,li.selected:hover{
                 background-color: #5A5A5A;

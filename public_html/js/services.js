@@ -12,7 +12,7 @@ var AppServices = angular.module('arc.services', []);
  * This service only keeps current Request values.
  * It does nothing more. Different service is responsible for saving and reastoring data.
  */
-AppServices.factory('$RequestValues', ['$RequestParser',function(parser) {
+AppServices.factory('RequestValues', ['$RequestParser',function(parser) {
     var service = {
         //current URL value
         'url': 'http://google.pl',
@@ -158,7 +158,7 @@ AppServices.factory('$RequestParser', [function() {
  * Chrome app can't use synchronius localStorage so it must use async 
  * chrome.storage object. It uses promises to handle async operations.
  */
-AppServices.factory('$RequestStore', ['$RequestValues','$q',function($RequestValues, $q) {
+AppServices.factory('$RequestStore', ['RequestValues','$q',function(RequestValues, $q) {
         var service = {};
         
         

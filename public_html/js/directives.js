@@ -14,8 +14,28 @@ ArcDirectives.directive('httpHeaderEditor', [function() {
         return {
             restrict: 'E',
             scope: {
-                'error': '='
+                'header': '=',
+                'remove': '&onRemove'
             },
             templateUrl: 'views/header-editor.html'
         };
     }]);
+ArcDirectives.directive('headersEditorForm', [function() {
+    function link(scope, element, attrs) {
+        element.on('click', function(e){
+            if(e.target.classList.contains('collapse-form')){
+                if(this.classList.contains('collapsed')){
+                    this.classList.remove('collapsed');
+                } else {
+                    this.classList.add('collapsed');
+                }
+            };
+        });
+    };
+    return {
+        restrict: 'A',
+        transclude: true,
+        templateUrl: 'views/partials/headers-editor-form.html',
+        link: link
+    };
+}]);

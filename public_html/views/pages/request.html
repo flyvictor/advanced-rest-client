@@ -1,0 +1,67 @@
+<div class="row form-group">
+    <div class="col-md-12">
+        <label for="requestUrl">URL</label>
+        <div class="input-group">
+            
+            <div class="input-group-btn">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{values.method}} <span class="caret"></span></button>
+                <ul class="dropdown-menu">
+                    <li><a ng-class="{'btn-primary': values.method === 'GET'}" ng-click="values.method='GET'">GET</a></li>
+                    <li><a ng-class="{'btn-primary': values.method === 'POST'}" ng-click="values.method='POST'">POST</a></li>
+                    <li><a ng-class="{'btn-primary': values.method === 'PUT'}" ng-click="values.method='PUT'">PUT</a></li>
+                    <li><a ng-class="{'btn-primary': values.method === 'DELETE'}" ng-click="values.method='DELETE'">DELETE</a></li>
+                    <li><a ng-class="{'btn-primary': values.method === 'OPTIONS'}" ng-click="values.method='OPTIONS'">OPTIONS</a></li>
+                    <li class="divider"></li>
+                    <li><a ng-class="{'btn-primary': ['GET','POST','PUT','DELETE','OPTIONS'].indexOf(values.method) === -1}" ng-click="editMethodOther()">OTHER</a></li>
+                </ul>
+            </div>
+            
+            <input type="url" class="form-control" id="requestUrl" placeholder="Enter requests URL" ng-model="values.url">
+            <div class="input-group-btn">
+                <button type="button" class="btn btn-default" tabindex="0">Send</button>
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" tabindex="-1">
+                    <span class="caret"></span>
+                    <span class="sr-only">Options</span>
+                </button>
+                <ul class="dropdown-menu pull-right" role="menu">
+                    <li role="presentation"><a href="#">Save</a></li>
+                    <li role="presentation"><a href="#">Open</a></li>
+                    <li role="presentation" class="divider"></li>
+                    <li role="presentation"><a href="#">Clear</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row form-group">
+    <div class="col-md-12">
+        <div headers-editor-form>
+            <div>
+                <label class="collapse-form">HTTP headers <span class="caret"></span></label>
+                <button class="btn btn-default btn-xs" type="button" title="Add new header" ng-click="addHeader()">add</button>
+            </div>
+            <http-header-editor ng-repeat="header in values.headers" header="header" on-remove="removeHeader()"></http-header-editor>
+        </div>
+    </div>
+</div>
+
+
+
+<script type="text/ng-template" id="otherHttpMethodModal.html">
+    <div class="modal-header">
+        <h3>Enter HTTP method name</h3>
+    </div>
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <input autofocus type="text" ng-model="method.name" class="form-control" ng-keydown="onKey($event)" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="ok()">OK</button>
+        <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+    </div>
+</script>

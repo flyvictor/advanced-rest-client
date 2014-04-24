@@ -10,62 +10,26 @@
     <body ng-controller="AppController">
         <div id="appContainer">
             <nav id="appNav">
-                <menu type="toolbar">
-                    <li class="selected">
-                        Request
+                <menu type="toolbar" role="menu">
+                    <li role="presentation" class="selected" ng-click="goto('/request')">
+                        <a href="#/request">Request</a>
                     </li>
-                    <li>
-                        Socket
+                    <li role="presentation" ng-click="goto('/socket')">
+                        <a href="#/socket">Socket</a>
                     </li>
-                    <li>
-                        History
+                    <li role="presentation" ng-click="goto('/history')">
+                        <a href="#/history">History</a>
                     </li>
-                    <li>
-                        Collections
+                    <li role="presentation" ng-click="goto('/collections')">
+                        <a href="#/collections">Collections</a>
                     </li>
                 </menu>
 
             </nav>
             <div class="container">
-                <div class="row form-group">
-                    <div class="col-md-12">
-                        <label for="requestUrl">URL</label>
-                        <div class="input-group">
-                            <input type="url" class="form-control" id="requestUrl" placeholder="Enter requests URL">
-                            <div class="input-group-btn">
-                                <button type="button" class="btn btn-default" tabindex="0">Send</button>
-                                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" tabindex="-1">
-                                    <span class="caret"></span>
-                                    <span class="sr-only">Options</span>
-                                </button>
-                                <ul class="dropdown-menu pull-right" role="menu">
-                                    <li><a href="#">Save</a></li>
-                                    <li><a href="#">Open</a></li>
-                                    <li class="divider"></li>
-                                    <li><a href="#">Clear</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row form-group">
-                    <div class="col-md-12">
-                        <div class="btn-toolbar" role="toolbar">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="'GET'">GET</button>
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="'POST'">POST</button>
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="'PUT'">PUT</button>
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="'DELETE'">DELETE</button>
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="'OPTIONS'">OPTIONS</button>
-                                <button type="button" class="btn btn-default btn-sm" ng-model="radioModel" btn-radio="''">Other</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row form-group">
-                    <div class="col-md-12"></div>
-                    <label>Headers</label>
-                    <http-header-editor error='"Walidacja"' length="3"></http-header-editor>
+                <div ng-view></div>
+                <div class="row">
+                    {{values||json}}
                 </div>
             </div>
         </div>
