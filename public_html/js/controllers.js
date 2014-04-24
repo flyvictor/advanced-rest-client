@@ -10,12 +10,22 @@ ArcControllers.controller('AppController', ['$scope','RequestValues','$location'
     $scope.goto = function(path){
         $location.path(path);
     };
+    
+    $scope.hasPayload = function(){
+        return ['GET','DELETE','OPTIONS'].indexOf($scope.values.method) === -1;
+    };
+    
+    $scope.isPathCurrent = function(path){
+        return $location.path() === path;
+    };
 }]);
 
 ArcControllers.controller('RequestController', ['$scope','$modal', function($scope,$modal){
     //testing only
-    $scope.removeHeader = function(){
-        console.log('removeHeader');
+    $scope.removeHeader = function(header){
+        $scope.values.headers = $scope.values.headers.filter(function(element){
+            return element !== header;
+        });
     };
     $scope.addHeader = function(){
         $scope.values.headers.push({'name':'','value':''});
@@ -38,6 +48,31 @@ ArcControllers.controller('RequestController', ['$scope','$modal', function($sco
             //console.log('accepted', method);
         }, function() {
             //console.log('canceled');
+        });
+    };
+    
+    $scope.httpRequestPreview = function($event){
+        $event.preventDefault();
+        $modal.open({
+            templateUrl: 'httpPreviewModal.html',
+            controller: HttpPreviewModal,
+            resolve: {
+                http: function() {
+                    var result = $scope.values.method + " " + $scope.values.url + " HTTP/1.1\n";
+                    result += "Host: " + $scope.values.url + "\n";
+                    for(var i in $scope.values.headers){
+                        var h = $scope.values.headers[i];
+                        if(h.name){
+                            result += h.name + ": " + h.value +"\n";
+                        }
+                    }
+                    if($scope.values.payload){
+                        result += "\n";
+                        result += $scope.values.payload;
+                    }
+                    return result;
+                }
+            }
         });
     };
     
@@ -65,5 +100,11 @@ var OtherHttpMethodModal = function ($scope, $modalInstance, currentValue) {
         if(e.keyCode === 13){
             $scope.ok();
         }
+    };
+};
+var HttpPreviewModal = function ($scope, $modalInstance, http) {
+    $scope.http = http;
+    $scope.dismiss = function() {
+        $modalInstance.dismiss('cancel');
     };
 };

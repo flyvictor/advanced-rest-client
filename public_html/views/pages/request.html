@@ -1,8 +1,6 @@
-<div class="row form-group">
+<div class="row form-group request-form">
     <div class="col-md-12">
-        <label for="requestUrl">URL</label>
         <div class="input-group">
-            
             <div class="input-group-btn">
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">{{values.method}} <span class="caret"></span></button>
                 <ul class="dropdown-menu">
@@ -16,7 +14,8 @@
                 </ul>
             </div>
             
-            <input type="url" class="form-control" id="requestUrl" placeholder="Enter requests URL" ng-model="values.url">
+            <input type="url" class="form-control" id="requestUrl" placeholder="Enter request URL here" ng-model="values.url">
+            
             <div class="input-group-btn">
                 <button type="button" class="btn btn-default" tabindex="0">Send</button>
                 <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" tabindex="-1">
@@ -28,6 +27,9 @@
                     <li role="presentation"><a href="#">Open</a></li>
                     <li role="presentation" class="divider"></li>
                     <li role="presentation"><a href="#">Clear</a></li>
+                    <li role="presentation"><a href="#" ng-click="httpRequestPreview($event)">Preview</a></li>
+                    <li role="presentation" class="divider"></li>
+                    <li role="presentation"><a href="#">Edit URL params</a></li>
                 </ul>
             </div>
         </div>
@@ -36,15 +38,50 @@
 <div class="row form-group">
     <div class="col-md-12">
         <div headers-editor-form>
-            <div>
-                <label class="collapse-form">HTTP headers <span class="caret"></span></label>
-                <button class="btn btn-default btn-xs" type="button" title="Add new header" ng-click="addHeader()">add</button>
+            <div class="http-form-title">
+                <label class="collapse-form">HTTP headers ({{values.headers.length}}) <span class="caret"></span></label>
             </div>
-            <http-header-editor ng-repeat="header in values.headers" header="header" on-remove="removeHeader()"></http-header-editor>
+            <tabset hiddable>
+                <tab heading="Plain headers">
+                    <textarea class="form-control" rows="3"></textarea>
+                </tab>
+                <tab heading="Headers form">
+                    <http-header-editor hiddable ng-repeat="header in values.headers" header="header" on-remove="removeHeader(header)"></http-header-editor>
+                    <div class="row form-action-bottom">
+                        <div class="col-md-12">
+                            <button class="btn btn-default btn-sm" type="button" title="Add new header" ng-click="addHeader()">add header</button>
+                        </div>
+                    </div>
+                </tab>
+            </tabset>
+            
         </div>
     </div>
 </div>
-
+<div class="row form-group" ng-if="hasPayload()">
+    <div class="col-md-12">
+        <div payload-editor-form>
+            <div class="http-form-title">
+                <label class="collapse-form">Payload <span class="caret"></span></label>
+            </div>
+            <tabset hiddable>
+                <tab heading="Plain payload">
+                    <textarea class="form-control" rows="3" ng-model="values.payload"></textarea>
+                </tab>
+                <tab heading="Payload form (0)">
+                    <div class="row form-action-bottom">
+                        <div class="col-md-12">
+                            <button class="btn btn-default btn-sm" type="button" title="Add new header" ng-click="a=1">add new</button>
+                        </div>
+                    </div>
+                </tab>
+                <tab heading="Files ({{values.files.length}})">
+                    
+                </tab>
+            </tabset>
+        </div>
+    </div>
+</div>
 
 
 <script type="text/ng-template" id="otherHttpMethodModal.html">
@@ -63,5 +100,18 @@
     <div class="modal-footer">
         <button class="btn btn-primary" ng-click="ok()">OK</button>
         <button class="btn btn-default" ng-click="cancel()">Cancel</button>
+    </div>
+</script>
+<script type="text/ng-template" id="httpPreviewModal.html">
+    <div class="modal-header">
+        <h3>HTTP request preview</h3>
+    </div>
+    <div class="modal-body">
+        <pre>
+{{http}}
+        </pre>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-default" ng-click="dismiss()">Close</button>
     </div>
 </script>

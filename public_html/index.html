@@ -11,20 +11,19 @@
         <div id="appContainer">
             <nav id="appNav">
                 <menu type="toolbar" role="menu">
-                    <li role="presentation" class="selected" ng-click="goto('/request')">
+                    <li role="presentation" ng-class="{'selected':isPathCurrent('/request')}" ng-click="goto('/request')">
                         <a href="#/request">Request</a>
                     </li>
-                    <li role="presentation" ng-click="goto('/socket')">
+                    <li role="presentation" ng-class="{'selected':isPathCurrent('/socket')}" ng-click="goto('/socket')">
                         <a href="#/socket">Socket</a>
                     </li>
-                    <li role="presentation" ng-click="goto('/history')">
+                    <li role="presentation" ng-class="{'selected':isPathCurrent('/history')}" ng-click="goto('/history')">
                         <a href="#/history">History</a>
                     </li>
-                    <li role="presentation" ng-click="goto('/collections')">
+                    <li role="presentation" ng-class="{'selected':isPathCurrent('/collections')}" ng-click="goto('/collections')">
                         <a href="#/collections">Collections</a>
                     </li>
                 </menu>
-
             </nav>
             <div class="container">
                 <div ng-view></div>

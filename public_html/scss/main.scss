@@ -5,7 +5,7 @@ html{
     overflow: auto;
 }
 body {
-    font: 100% $font-main;
+    font-family: $font-main;
     color: $primary-color;
 }
 html, body{
@@ -55,6 +55,11 @@ html, body{
 
 .headerRow{
     display: flex;
+    
+    &.form-group{
+        margin-bottom: 0px;
+    }
+    
     input[name="headerName"]{
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
@@ -74,4 +79,17 @@ html, body{
         min-width: 75px;
         flex: 0 0 auto;
     }
+}
+.request-form{
+    margin-top: 0.6em;
+}
+div.tab-content {
+    margin-top: 2px;
+}
+/* REQUEST HEADERS */
+[headers-editor-form].collapsed [hiddable]{
+    display: none;
+}
+.form-action-bottom{
+    margin-top: 7px;
 }

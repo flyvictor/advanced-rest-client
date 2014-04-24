@@ -19,9 +19,9 @@ AppServices.factory('RequestValues', ['$RequestParser',function(parser) {
         //current HTTP method. GET by default.
         'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
-        'headers': [],
+        'headers': [{'name':'','value':''}],
         //payload is a string of data to send
-        'paylod': null,
+        'payload': null,
         //array of FileObjects
         'files': []
     };

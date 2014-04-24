@@ -32,8 +32,8 @@ chrome.runtime.onInstalled.addListener(function(details) {
 chrome.app.runtime.onLaunched.addListener(function() {
   chrome.app.window.create('index.html', {
     'id': 'arcMainWindow',
-    'minWidth': 800,
-    'minHeight': 600
+    'minWidth': 1280,
+    'minHeight': 800
   });
 });
 
