@@ -76,6 +76,23 @@ ArcControllers.controller('RequestController', ['$scope','$modal', function($sco
         });
     };
     
+    var cmHeadersEditor = null, cmPayloadEditor = null;
+    /**
+     * Options list for CodeMirror class for headers
+     */
+   $scope.headersEditorOptions = {
+       lineWrapping: true,
+       lineNumbers: false,
+       autoClearEmptyLines: true,
+       mode: 'message/http',
+       extraKeys: {
+           'Ctrl-Space': 'autocompleteHeaders'
+       },
+       onLoad: function(_editor) {
+           cmHeadersEditor = _editor;
+       }
+   };
+    
 }]);
 
 ArcControllers.controller('SocketController', ['$scope', function($scope){}]);

@@ -14,7 +14,8 @@ var RestClient = angular.module('RestClient', [
   'arc.directives',
   'arc.modules',
   'arc.controllers',
-  'ui.bootstrap'
+  'ui.bootstrap',
+  'ui.codemirror'
 ]);
 
 RestClient.value('version', '0.1');

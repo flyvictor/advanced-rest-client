@@ -39,3 +39,22 @@ ArcDirectives.directive('headersEditorForm', [function() {
         link: link
     };
 }]);
+/**
+ * http://stackoverflow.com/a/17063046
+ */
+ArcDirectives.directive("fileread", [function() {
+    return {
+        scope: {
+            fileread: "="
+        },
+        link: function(scope, element, attributes) {
+            element.bind("change", function(changeEvent) {
+                scope.$apply(function() {
+                    scope.fileread = changeEvent.target.files;
+                    // or all selected files:
+                    // scope.fileread = changeEvent.target.files;
+                });
+            });
+        }
+    };
+}]);

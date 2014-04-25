@@ -43,7 +43,7 @@
             </div>
             <tabset hiddable>
                 <tab heading="Plain headers">
-                    <textarea class="form-control" rows="3"></textarea>
+                    <textarea ui-codemirror="headersEditorOptions" ng-model="tmp.rawHeaders" ui-refresh="refreshHeadersCodeMirror" class="form-control" rows="3"></textarea>
                 </tab>
                 <tab heading="Headers form">
                     <http-header-editor hiddable ng-repeat="header in values.headers" header="header" on-remove="removeHeader(header)"></http-header-editor>
