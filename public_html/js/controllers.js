@@ -11,28 +11,36 @@ ArcControllers.controller('AppController', ['$scope','RequestValues','$location'
         $location.path(path);
     };
     
-    $scope.hasPayload = function(){
-        return ['GET','DELETE','OPTIONS'].indexOf($scope.values.method) === -1;
-    };
-    
     $scope.isPathCurrent = function(path){
         return $location.path() === path;
     };
+    
 }]);
 
-ArcControllers.controller('RequestController', ['$scope','$modal', function($scope,$modal){
-    //testing only
+ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','RequestValues', function($scope,$modal,CodeMirror,RequestValues){
+    /**
+     * Remove selected header from headers list.
+     * @param {Object} header Map with "name" and "value" keys.
+     * @returns {undefined}
+     */
     $scope.removeHeader = function(header){
-        $scope.values.headers = $scope.values.headers.filter(function(element){
+        $scope.values.headers.value = $scope.values.headers.value.filter(function(element){
             return element !== header;
         });
     };
+    /**
+     * Create new, empty header object.
+     * @returns {undefined}
+     */
     $scope.addHeader = function(){
-        $scope.values.headers.push({'name':'','value':''});
+        $scope.values.headers.value.push({'name':'','value':''});
     };
     
-    
-    
+    /**
+     * Callback for changin HTTP method to Other.
+     * It will display a popup with input field to enter Method.
+     * @returns {undefined}
+     */
     $scope.editMethodOther = function(){
         var modalInstance = $modal.open({
             templateUrl: 'otherHttpMethodModal.html',
@@ -45,12 +53,13 @@ ArcControllers.controller('RequestController', ['$scope','$modal', function($sco
         });
         modalInstance.result.then(function(method) {
             $scope.values.method = method;
-            //console.log('accepted', method);
-        }, function() {
-            //console.log('canceled');
-        });
+        }, function() {});
     };
-    
+    /**
+     * Will show a popup with HTTP data preview.
+     * @param {HTMLEvent} $event
+     * @returns {undefined}
+     */
     $scope.httpRequestPreview = function($event){
         $event.preventDefault();
         $modal.open({
@@ -60,8 +69,8 @@ ArcControllers.controller('RequestController', ['$scope','$modal', function($sco
                 http: function() {
                     var result = $scope.values.method + " " + $scope.values.url + " HTTP/1.1\n";
                     result += "Host: " + $scope.values.url + "\n";
-                    for(var i in $scope.values.headers){
-                        var h = $scope.values.headers[i];
+                    for(var i in $scope.values.headers.value){
+                        var h = $scope.values.headers.value[i];
                         if(h.name){
                             result += h.name + ": " + h.value +"\n";
                         }
@@ -76,23 +85,51 @@ ArcControllers.controller('RequestController', ['$scope','$modal', function($sco
         });
     };
     
-    var cmHeadersEditor = null, cmPayloadEditor = null;
     /**
-     * Options list for CodeMirror class for headers
+     * Options list for CodeMirror instance for headers
      */
-   $scope.headersEditorOptions = {
-       lineWrapping: true,
-       lineNumbers: false,
-       autoClearEmptyLines: true,
-       mode: 'message/http',
-       extraKeys: {
-           'Ctrl-Space': 'autocompleteHeaders'
-       },
-       onLoad: function(_editor) {
-           cmHeadersEditor = _editor;
-       }
-   };
+    $scope.headersEditor = {
+        options: CodeMirror.headersOptions,
+        value: $scope.values.headers.toString()
+    };
+    /**
+     * Options list for CodeMirror instance for payload
+     */
+    $scope.payloadEditor = {
+        options: CodeMirror.payloadOptions,
+        value: $scope.values.payload.value
+    };
     
+    ///Observe changes in headers raw form
+    $scope.$watch('headersEditor.value', function(newVal, oldVal){
+        if (newVal !== oldVal) {
+            $scope.values.headers.fromString(newVal);
+        }
+    });
+    $scope.refreshHeadersEditor = function(){
+        $scope.headersEditor.value = $scope.values.headers.toString();
+        CodeMirror.headersInst.refresh();
+    };
+    ///Observe changes in headers and react on content-type header change
+    var latestContentType = null;
+    $scope.$watch('values.headers.value', function(newVal, oldVal){
+        if(newVal !== oldVal){
+            if(RequestValues.hasPayload()){
+                var ct = RequestValues.getCurrentContentType();
+                if(latestContentType !== ct){
+                    latestContentType = ct;
+                    CodeMirror.updateMode();
+                }
+            }
+        }
+    }, true);
+    
+    
+    $scope.removeFile = function(file){
+        $scope.values.files = $scope.values.files.filter(function(element){
+            return element !== file;
+        });
+    };
 }]);
 
 ArcControllers.controller('SocketController', ['$scope', function($scope){}]);

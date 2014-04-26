@@ -12,16 +12,20 @@ var AppServices = angular.module('arc.services', []);
  * This service only keeps current Request values.
  * It does nothing more. Different service is responsible for saving and reastoring data.
  */
-AppServices.factory('RequestValues', ['$RequestParser',function(parser) {
+AppServices.factory('RequestValues', ['RequestParser',function(parser) {
     var service = {
         //current URL value
-        'url': 'http://google.pl',
+        'url': 'http://127.0.0.1/test',
         //current HTTP method. GET by default.
-        'method': 'GET',
+        'method': 'POST',
         //headers array. Array of objects where keys are "name" and "value"
-        'headers': [{'name':'','value':''}],
+        'headers': {
+            'value': [{'name':'Content-Type','value':'application/json'}]
+        },
         //payload is a string of data to send
-        'payload': null,
+        'payload': {
+            'value': '{\n\t\'a\': \'b\'\n}'
+        },
         //array of FileObjects
         'files': []
     };
@@ -32,25 +36,54 @@ AppServices.factory('RequestValues', ['$RequestParser',function(parser) {
      * @returns {String}
      */
     service.headers.toString = function(){
-        if(this.length === 0) return '';
-        return parser.headersToString(this);
+        if(this.value.length === 0) return '';
+        return parser.headersToString(this.value);
     };
     service.headers.toArray = function(headersString){
-        if(this.length === 0) return '';
-        service.headers = parser.headersToArray(headersString);
+        if(this.value.length === 0) return [];
+        return parser.headersToArray(headersString);
+    };
+    service.headers.fromString = function(headersString){
+        if(this.length === 0) {
+            service.headers.value =  '';
+            return;
+        }
+        service.headers.value = parser.headersToArray(headersString);
+    };
+    
+    /**
+     * Shortcut to get current value of the Content-Type header.
+     * It will return null if there is no Content-Type header.
+     * @returns {String|null}
+     */
+    service.getCurrentContentType = function () {
+        var h = service.headers.value;
+        for (var i = 0, len = h.length; i < len; i++) {
+            if (h[i].name.toLowerCase() === 'content-type') {
+                return h[i].value;
+            }
+        }
+        return null;
+    };
+    /**
+     * Check if cuurent request can carry payload.
+     * @returns {Boolean}
+     */
+    service.hasPayload = function(){
+        return ['GET','DELETE','OPTIONS'].indexOf(service.method) === -1;
     };
     
     return service;
 }]);
 /**
  * @ngdoc overview
- * @name $RequestParser
+ * @name RequestParser
  *
  * @description
  * This service is sed to parse headers and payload values from array to HTTP string 
  * or vice versa.
  */
-AppServices.factory('$RequestParser', [function() {
+AppServices.factory('RequestParser', [function() {
         
         /** 
          * Filter array of headers and return not duplicated array of the same headers. 
@@ -114,7 +147,7 @@ AppServices.factory('$RequestParser', [function() {
          * @returns {Array} The array of key:value objects
          */
         function headersToArray(headersString) {
-            if(!(headersString instanceof String)){
+            if(typeof headersString !== "string"){
                 throw "Headers must be an instance of String.";
             }
             if (headersString === null || headersString.isEmpty()) {
@@ -251,4 +284,91 @@ AppServices.factory('$ChromeStorage', ['$q', function($q) {
     'set': saveData,
     'get': restoreData
   };
+}]);
+
+AppServices.factory('CodeMirror', ['RequestValues',function(RequestValues) {
+        var headersCodeMirrorInstance = null, payloadCodeMirrorInstance = null;;
+        var headerOptions = {
+            lineWrapping: true,
+            lineNumbers: false,
+            autoClearEmptyLines: true,
+            mode: 'message/http',
+            extraKeys: {
+                'Ctrl-Space': function (cm){
+                     try {
+                         CodeMirror.showHint(cm, CodeMirror.headersHint);
+                     } catch (e) {
+                         console.warn('Headers hint error', e);
+                     }
+                }
+            },
+            onLoad: function(_editor) {
+                headersCodeMirrorInstance = _editor;
+            }
+        };
+        
+        var payloadEditorOptions = {
+            lineWrapping: true,
+            lineNumbers: false,
+            autoClearEmptyLines: false,
+            onLoad: function(_editor) {
+                payloadCodeMirrorInstance = _editor;
+                setPayloadEditorCurrentMode();
+            },
+            extraKeys: {
+                'Ctrl-Space': function(cm) {
+                    var module = null, ct = RequestValues.getCurrentContentType();
+                    if (!ct || ct.indexOf("html") >= 0) {
+                        module = CodeMirror.hint.html;
+                    } else if (ct.indexOf("json") >= 0 || ct.indexOf("javascript") >= 0) {
+                        module = CodeMirror.hint.javascript;
+                    } else if (ct.indexOf("xml") >= 0 || ct.indexOf("atom") >= 0 || ct.indexOf("rss") >= 0) {
+                        module = CodeMirror.hint.xml;
+                    } else if (ct.indexOf("sql") >= 0) {
+                        module = CodeMirror.hint.sql;
+                    } else if (ct.indexOf("css") >= 0) {
+                        module = CodeMirror.hint.css;
+                    } else {
+                        module = CodeMirror.hint.anyword;
+                    }
+                    CodeMirror.showHint(cm, module, {});
+                }
+            }
+        };
+        
+        var setPayloadEditorCurrentMode = function() {
+            if (!payloadCodeMirrorInstance)
+                return;
+            //translate mode
+            var mode = "", ct = RequestValues.getCurrentContentType();
+            if (!ct || ct.indexOf("html") >= 0) {
+                mode = 'htmlmixed';
+            } else if (ct.indexOf("json") >= 0 || ct.indexOf("javascript") >= 0) {
+                mode = 'javascript';
+            } else if (ct.indexOf("xml") >= 0 || ct.indexOf("atom") >= 0 || ct.indexOf("rss") >= 0) {
+                mode = 'xml';
+            } else if (ct.indexOf("sql") >= 0) {
+                mode = 'sql';
+            } else if (ct.indexOf("css") >= 0) {
+                mode = 'css';
+            } else {
+                mode = 'htmlmixed';
+            }
+            payloadCodeMirrorInstance.setOption("mode", ct);
+            CodeMirror.autoLoadMode(payloadCodeMirrorInstance, mode);
+        };
+        
+        var service = {
+            'headersOptions': headerOptions,
+            'payloadOptions': payloadEditorOptions,
+            get headersInst () {
+                return headersCodeMirrorInstance;
+            },
+            get payloadInst () {
+                return payloadCodeMirrorInstance;
+            },
+            'updateMode': setPayloadEditorCurrentMode
+        };
+        
+        return service;
 }]);

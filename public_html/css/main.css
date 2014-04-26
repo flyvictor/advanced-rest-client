@@ -7,7 +7,8 @@ html {
 
 body {
   font-family: Helvetica, sans-serif;
-  color: #333333; }
+  color: #333333;
+  background-color: #ececec; }
 
 html, body {
   height: 100%;
@@ -38,7 +39,7 @@ html, body {
 #appContainer #appNav menu li.selected, #appContainer #appNav menu li.selected:hover {
   background-color: #5A5A5A; }
 #appContainer #appNav menu li:hover {
-  background-color: #3f3f3f; }
+  background-color: whitesmoke; }
 #appContainer .container {
   flex: 1; }
 
@@ -70,8 +71,128 @@ div.tab-content {
   margin-top: 2px; }
 
 /* REQUEST HEADERS */
-[headers-editor-form].collapsed [hiddable] {
+[hidable-editor-form].collapsed [hiddable] {
   display: none; }
+
+[hidable-editor-form].collapsed .collapse-form .caret {
+  -webkit-transform: rotate(-180deg);
+  transform: rotate(-180deg); }
+
+[hidable-editor-form] .collapse-form .caret {
+  -webkit-transition: -webkit-transform 0.3s; }
+
+label.collapse-form {
+  font-size: 12px;
+  color: #666666; }
+
+.card {
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 5px;
+  border: 1px #E6E6E6 solid;
+  position: relative; }
 
 .form-action-bottom {
   margin-top: 7px; }
+
+.container .CodeMirror {
+  border: 1px #D8D8D8 solid;
+  height: auto;
+  width: 100%;
+  margin-top: 0;
+  padding-top: 0;
+  min-height: 55px;
+  /*border-top: none;*/ }
+.container .CodeMirror pre {
+  /*      display: initial;
+          padding: initial;
+          margin: initial;
+          font-size: initial;
+          line-height: initial;
+          word-break: initial; 
+          word-wrap: initial;
+          white-space: initial;
+          background-color: initial;
+          border: initial;
+          -webkit-border-radius: initial;
+          border-radius: initial;*/
+  word-break: break-word;
+  word-wrap: break-word; }
+.container .CodeMirror.noborder {
+  border: none; }
+
+.CodeMirror-wrap pre {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: normal;
+  display: block;
+  color: black;
+  font-family: monospace;
+  padding: 0 4px;
+  line-height: 1.3; }
+
+.CodeMirror-scroll {
+  cursor: text; }
+
+.cursor-pointer {
+  cursor: pointer; }
+
+.tabbable ul.nav.nav-tabs {
+  position: absolute;
+  right: 0;
+  top: 0;
+  border-bottom: none; }
+.tabbable ul.nav.nav-tabs li a {
+  cursor: pointer;
+  padding-bottom: 5px; }
+.tabbable ul.nav.nav-tabs li.active a {
+  border-bottom: none;
+  margin-top: 0px;
+  border-left: none;
+  border-right: none;
+  border-radius: 0px;
+  border-top: 3px red solid;
+  /*font-weight: bold;*/
+  padding-top: 8px; }
+
+div.file-drop {
+  min-height: 100px;
+  width: 100%;
+  border: 3px #b0b0f7 dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+div.file-drop.over {
+  border: 3px dashed #1010A0; }
+div.file-drop.over .drop-info {
+  color: #1010A0; }
+div.file-drop.over .fallback-info, div.file-drop.over .btn {
+  opacity: 0.4; }
+div.file-drop .drop-info {
+  display: block;
+  font-size: 18px;
+  color: #a0a0a0; }
+div.file-drop .fallback-options {
+  display: inline-block;
+  text-align: center; }
+div.file-drop .fallback-options .fallback-info {
+  display: block;
+  color: #a0a0a0;
+  -webkit-transition: opacity 0.4s; }
+div.file-drop .fallback-options .btn {
+  -webkit-transition: opacity 0.4s; }
+div.file-drop #ArcHttpFilesInput {
+  visibility: hidden;
+  width: 0;
+  height: 0; }
+
+.files-list .item {
+  display: inline-block;
+  margin-right: 7px;
+  padding: 3px 5px;
+  border: 1px #e5e5e5 solid;
+  margin-top: 7px; }
+.files-list .item:hover {
+  background-color: whitesmoke; }
+.files-list .item:hover .badge {
+  cursor: pointer; }

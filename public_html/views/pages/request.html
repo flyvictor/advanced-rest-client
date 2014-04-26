@@ -37,16 +37,16 @@
 </div>
 <div class="row form-group">
     <div class="col-md-12">
-        <div headers-editor-form>
+        <div hidable-editor-form>
             <div class="http-form-title">
-                <label class="collapse-form">HTTP headers ({{values.headers.length}}) <span class="caret"></span></label>
+                <label class="collapse-form">HTTP headers ({{values.headers.value.length}}) <span class="caret"></span></label>
             </div>
             <tabset hiddable>
-                <tab heading="Plain headers">
-                    <textarea ui-codemirror="headersEditorOptions" ng-model="tmp.rawHeaders" ui-refresh="refreshHeadersCodeMirror" class="form-control" rows="3"></textarea>
+                <tab heading="Plain headers" select="refreshHeadersEditor()">
+                    <textarea ui-codemirror="headersEditor.options" ng-model="headersEditor.value"></textarea>
                 </tab>
                 <tab heading="Headers form">
-                    <http-header-editor hiddable ng-repeat="header in values.headers" header="header" on-remove="removeHeader(header)"></http-header-editor>
+                    <http-header-editor hiddable ng-repeat="header in values.headers.value" header="header" on-remove="removeHeader(header)"></http-header-editor>
                     <div class="row form-action-bottom">
                         <div class="col-md-12">
                             <button class="btn btn-default btn-sm" type="button" title="Add new header" ng-click="addHeader()">add header</button>
@@ -54,29 +54,26 @@
                     </div>
                 </tab>
             </tabset>
-            
         </div>
     </div>
 </div>
-<div class="row form-group" ng-if="hasPayload()">
+<div class="row form-group" ng-if="values.hasPayload()">
     <div class="col-md-12">
-        <div payload-editor-form>
+        <div hidable-editor-form>
             <div class="http-form-title">
                 <label class="collapse-form">Payload <span class="caret"></span></label>
             </div>
             <tabset hiddable>
                 <tab heading="Plain payload">
-                    <textarea class="form-control" rows="3" ng-model="values.payload"></textarea>
-                </tab>
-                <tab heading="Payload form (0)">
-                    <div class="row form-action-bottom">
-                        <div class="col-md-12">
-                            <button class="btn btn-default btn-sm" type="button" title="Add new header" ng-click="a=1">add new</button>
-                        </div>
-                    </div>
+                    <textarea ui-codemirror="payloadEditor.options" ng-model="values.payload.value"></textarea>
                 </tab>
                 <tab heading="Files ({{values.files.length}})">
-                    
+                    <div file-dropzone files="values.files"></div>
+                    <div class="files-list">
+                        <div class="item" ng-repeat="file in values.files" tooltip="size: {{file.size}}, modified: {{file.lastModifiedDate|date:'short'}}">
+                            {{file.name}} <span class="badge" ng-click="removeFile(file)">x</span>
+                        </div>
+                    </div>
                 </tab>
             </tabset>
         </div>
