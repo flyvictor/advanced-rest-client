@@ -70,7 +70,7 @@
                 <tab heading="Files ({{values.files.length}})">
                     <div file-dropzone files="values.files"></div>
                     <div class="files-list">
-                        <div class="item" ng-repeat="file in values.files" tooltip="size: {{file.size}}, modified: {{file.lastModifiedDate|date:'short'}}">
+                        <div class="item" ng-repeat="file in values.files" tooltip="size: {{file.size|filesize}}, modified: {{file.lastModifiedDate|date:'short'}}">
                             {{file.name}} <span class="badge" ng-click="removeFile(file)">x</span>
                         </div>
                     </div>

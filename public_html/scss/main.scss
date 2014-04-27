@@ -12,6 +12,7 @@ body {
 html, body{
     height:100%;
     margin:0;
+    overflow: auto;
 }
 #appContainer{
     display: flex;
@@ -45,7 +46,7 @@ html, body{
                 background-color: #5A5A5A;
             }
             li:hover{
-                background-color: $lineHoverBackground;
+                background-color: #3f3f3f;
             }
         }
     }
@@ -120,37 +121,25 @@ label.collapse-form {
     margin-top: 0;
     padding-top: 0;
     min-height: 55px;
-    /*border-top: none;*/
     pre {
-/*      display: initial;
-        padding: initial;
-        margin: initial;
-        font-size: initial;
-        line-height: initial;
-        word-break: initial; 
-        word-wrap: initial;
-        white-space: initial;
-        background-color: initial;
-        border: initial;
-        -webkit-border-radius: initial;
-        border-radius: initial;*/
         word-break: break-word;
         word-wrap: break-word;
     }
     &.noborder{
         border: none;
     }
+    &.CodeMirror-wrap pre{
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        word-break: normal;
+        display: block;
+        color: black;
+        font-family: monospace;
+        padding: 0 4px;
+        line-height: 1.3;
+    }
 }
-.CodeMirror-wrap pre{
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    word-break: normal;
-    display: block;
-    color: black;
-    font-family: monospace;
-    padding: 0 4px;
-    line-height: 1.3;
-}
+
 
 .CodeMirror-scroll {
     cursor: text;
@@ -171,6 +160,12 @@ label.collapse-form {
         li a{
             cursor: pointer;
             padding-bottom: 5px;
+            color: #333;
+            &:hover{
+                background-color: transparent;
+                border-color: transparent;
+                text-decoration: underline;
+            }
         }
         li.active a {
             border-bottom: none;
@@ -179,8 +174,11 @@ label.collapse-form {
             border-right: none;
             border-radius: 0px;
             border-top: 3px red solid;
-            /*font-weight: bold;*/
+            font-weight: bold;
             padding-top: 8px;
+            &:hover{
+                text-decoration: none;
+            }
         }
     }
     

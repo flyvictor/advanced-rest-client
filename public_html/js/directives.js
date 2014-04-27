@@ -62,31 +62,73 @@ ArcDirectives.directive("fileread", [function() {
 /**
  * File drag and drop.
  */
-ArcDirectives.directive('fileDropzone', function() {
+ArcDirectives.directive('fileDropzone', ['$timeout', function($timeout) {
     
     var link = function(scope, element, attrs){
-        
         scope.fallback = function(){
             var elm = element.find('#ArcHttpFilesInput');
             if(elm.length === 0) return;
             fallbackClick(elm[0]);
         };
         
-        var handleFiles = function(files){
-            var filesArray = [];
+        var handleFiles = function(files, items){
             for(var i=0, len = files.length; i<len; i++){
-                filesArray[filesArray.length] = files[i];
+                var presumablyFile = files[i];
+                if(items){
+                    var presumablyFileItem = items[i];
+                    //User can drop any file - even a directory.
+                    //The app should distinguish between them 
+                    //and read directory entries if needed 
+                    //This if only available on Chrome.   
+                    var entry = presumablyFileItem.webkitGetAsEntry();
+                    if(!entry){
+                        continue;
+                    }
+                    if(entry.isFile){
+                        appendFile(presumablyFile);
+                    } else {
+                        $timeout(function(){
+                            entry.createReader().readEntries(directoryRead, directoryReadError);
+                        },0);
+                    }
+                } else {
+                    appendFile(presumablyFile);
+                }
             }
+        };
+        
+        var directoryRead = function(entries){
+            for(var i=0, len=entries.length; i<len; i++){
+                var entry = entries[i];
+                if(entry.isFile){
+                    $timeout(function(entry){
+                        entry.file(function(file) {
+                            appendFile(file);
+                        }, directoryReadError);
+                    }.bind(this,entry),0);
+                } else {
+                    $timeout(function(){
+                        entry.createReader().readEntries(directoryRead, directoryReadError);
+                    });
+                }
+            }
+        };
+        var directoryReadError = function(){};
+        
+        var appendFile = function(file){
             scope.$apply(function(){
-                scope.files = scope.files.concat(filesArray);
+                scope.files.push(file);
             });
         };
+        
+        
         var handleDrop = function(e){
             if (e.stopPropagation) {
                 e.stopPropagation(); // stops the browser from redirecting.
             }
+            e.preventDefault();
             var dataTransfer = e.dataTransfer || e.originalEvent.dataTransfer;
-            handleFiles(dataTransfer.files);
+            handleFiles(dataTransfer.files, dataTransfer.items);
             this.classList.remove('over');
             return false;
         };
@@ -135,4 +177,4 @@ ArcDirectives.directive('fileDropzone', function() {
         templateUrl: 'views/partials/file_drop.html'
     };
     return directive;
-});
+}]);

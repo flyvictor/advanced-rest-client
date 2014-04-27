@@ -12,7 +12,8 @@ body {
 
 html, body {
   height: 100%;
-  margin: 0; }
+  margin: 0;
+  overflow: auto; }
 
 #appContainer {
   display: flex;
@@ -39,7 +40,7 @@ html, body {
 #appContainer #appNav menu li.selected, #appContainer #appNav menu li.selected:hover {
   background-color: #5A5A5A; }
 #appContainer #appNav menu li:hover {
-  background-color: whitesmoke; }
+  background-color: #3f3f3f; }
 #appContainer .container {
   flex: 1; }
 
@@ -101,27 +102,13 @@ label.collapse-form {
   width: 100%;
   margin-top: 0;
   padding-top: 0;
-  min-height: 55px;
-  /*border-top: none;*/ }
+  min-height: 55px; }
 .container .CodeMirror pre {
-  /*      display: initial;
-          padding: initial;
-          margin: initial;
-          font-size: initial;
-          line-height: initial;
-          word-break: initial; 
-          word-wrap: initial;
-          white-space: initial;
-          background-color: initial;
-          border: initial;
-          -webkit-border-radius: initial;
-          border-radius: initial;*/
   word-break: break-word;
   word-wrap: break-word; }
 .container .CodeMirror.noborder {
   border: none; }
-
-.CodeMirror-wrap pre {
+.container .CodeMirror.CodeMirror-wrap pre {
   word-wrap: break-word;
   white-space: pre-wrap;
   word-break: normal;
@@ -144,7 +131,12 @@ label.collapse-form {
   border-bottom: none; }
 .tabbable ul.nav.nav-tabs li a {
   cursor: pointer;
-  padding-bottom: 5px; }
+  padding-bottom: 5px;
+  color: #333; }
+.tabbable ul.nav.nav-tabs li a:hover {
+  background-color: transparent;
+  border-color: transparent;
+  text-decoration: underline; }
 .tabbable ul.nav.nav-tabs li.active a {
   border-bottom: none;
   margin-top: 0px;
@@ -152,8 +144,10 @@ label.collapse-form {
   border-right: none;
   border-radius: 0px;
   border-top: 3px red solid;
-  /*font-weight: bold;*/
+  font-weight: bold;
   padding-top: 8px; }
+.tabbable ul.nav.nav-tabs li.active a:hover {
+  text-decoration: none; }
 
 div.file-drop {
   min-height: 100px;
