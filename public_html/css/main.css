@@ -2,13 +2,67 @@ html, body, ul, ol {
   margin: 0;
   padding: 0; }
 
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 100;
+  src: local("Roboto Thin"), local("Roboto-Thin"), url(../fonts/roboto/vzIUHo9z-oJ4WgkpPOtg1_esZW2xOQ-xsNqO47m55DA.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 300;
+  src: local("Roboto Light"), local("Roboto-Light"), url(../fonts/roboto/Hgo13k-tfSpn0qi1SFdUfT8E0i7KZn-EPnyo3HZu7kw.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: local("Roboto Regular"), local("Roboto-Regular"), url(../fonts/roboto/2UX7WLTfW3W8TclTUvlFyQ.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 500;
+  src: local("Roboto Medium"), local("Roboto-Medium"), url(../fonts/roboto/RxZJdnzeo3R5zSexge8UUT8E0i7KZn-EPnyo3HZu7kw.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 700;
+  src: local("Roboto Bold"), local("Roboto-Bold"), url(../fonts/roboto/d-6IYplOFocCacKzxwXSOD8E0i7KZn-EPnyo3HZu7kw.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 100;
+  src: local("Roboto Thin Italic"), local("Roboto-ThinItalic"), url(../fonts/roboto/12mE4jfMSBTmg-81EiS-YRsxEYwM7FgeyaSgU71cLG0.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 300;
+  src: local("Roboto Light Italic"), local("Roboto-LightItalic"), url(../fonts/roboto/7m8l7TlFO-S3VkhHuR0at4bN6UDyHWBl620a-IRfuBk.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 400;
+  src: local("Roboto Italic"), local("Roboto-Italic"), url(../fonts/roboto/1pO9eUAp8pSF8VnRTP3xnvesZW2xOQ-xsNqO47m55DA.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 500;
+  src: local("Roboto Medium Italic"), local("Roboto-MediumItalic"), url(../fonts/roboto/OLffGBTaF0XFOW1gnuHF0YbN6UDyHWBl620a-IRfuBk.woff) format("woff"); }
+@font-face {
+  font-family: 'Roboto';
+  font-style: italic;
+  font-weight: 700;
+  src: local("Roboto Bold Italic"), local("Roboto-BoldItalic"), url(../fonts/roboto/t6Nd4cfPRhZP44Q5QAjcC4bN6UDyHWBl620a-IRfuBk.woff) format("woff"); }
 html {
   overflow: auto; }
 
 body {
-  font-family: Helvetica, sans-serif;
+  font-family: Roboto, arial, sans-serif;
   color: #333333;
-  background-color: #ececec; }
+  background-color: #EBEBEB;
+  font-size: 14px;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: 300; }
 
 html, body {
   height: 100%;
@@ -43,6 +97,8 @@ html, body {
   background-color: #3f3f3f; }
 #appContainer .container {
   flex: 1; }
+#appContainer .btn {
+  font-weight: 300; }
 
 .headerRow {
   display: flex; }
@@ -83,21 +139,24 @@ div.tab-content {
   -webkit-transition: -webkit-transform 0.3s; }
 
 label.collapse-form {
-  font-size: 12px;
-  color: #666666; }
+  /*font-size: 14px;*/
+  color: #666666;
+  font-weight: 300;
+  margin-bottom: 10px;
+  display: block; }
 
 .card {
   background-color: #fff;
   padding: 15px;
   border-radius: 5px;
-  border: 1px #E6E6E6 solid;
+  border: 1px #d8d8d8 solid;
   position: relative; }
 
 .form-action-bottom {
   margin-top: 7px; }
 
 .container .CodeMirror {
-  border: 1px #D8D8D8 solid;
+  border: 1px #F7F7F7 solid;
   height: auto;
   width: 100%;
   margin-top: 0;
@@ -124,6 +183,12 @@ label.collapse-form {
 .cursor-pointer {
   cursor: pointer; }
 
+.dropdown-menu > li > a.btn-primary {
+  color: #fff;
+  cursor: pointer; }
+.dropdown-menu > li > a.btn-primary:hover {
+  background-color: #3276b1; }
+
 .tabbable ul.nav.nav-tabs {
   position: absolute;
   right: 0;
@@ -143,14 +208,14 @@ label.collapse-form {
   border-left: none;
   border-right: none;
   border-radius: 0px;
-  border-top: 3px red solid;
-  font-weight: bold;
+  border-top: 3px #ff7b7b solid;
+  font-weight: 400;
   padding-top: 8px; }
 .tabbable ul.nav.nav-tabs li.active a:hover {
   text-decoration: none; }
 
 div.file-drop {
-  min-height: 100px;
+  min-height: 150px;
   width: 100%;
   border: 3px #b0b0f7 dashed;
   display: flex;
@@ -164,15 +229,17 @@ div.file-drop.over .fallback-info, div.file-drop.over .btn {
   opacity: 0.4; }
 div.file-drop .drop-info {
   display: block;
-  font-size: 18px;
-  color: #a0a0a0; }
+  font-size: 20px;
+  color: #a0a0a0;
+  font-weight: 400; }
 div.file-drop .fallback-options {
   display: inline-block;
   text-align: center; }
 div.file-drop .fallback-options .fallback-info {
   display: block;
   color: #a0a0a0;
-  -webkit-transition: opacity 0.4s; }
+  -webkit-transition: opacity 0.4s;
+  margin-top: 5px; }
 div.file-drop .fallback-options .btn {
   -webkit-transition: opacity 0.4s; }
 div.file-drop #ArcHttpFilesInput {

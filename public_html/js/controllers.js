@@ -4,7 +4,7 @@
 
 var ArcControllers = angular.module('arc.controllers', []);
 
-ArcControllers.controller('AppController', ['$scope','RequestValues','$location', function($scope,RequestValues,$location){
+ArcControllers.controller('AppController', ['$scope','RequestValues','$location', '$rootScope', 'APP_EVENTS','HttpRequest', function($scope,RequestValues,$location,$rootScope,APP_EVENTS,HttpRequest){
     $scope.values = RequestValues;
     
     $scope.goto = function(path){
@@ -13,6 +13,10 @@ ArcControllers.controller('AppController', ['$scope','RequestValues','$location'
     
     $scope.isPathCurrent = function(path){
         return $location.path() === path;
+    };
+    
+    $scope.runRequest = function(){
+        $rootScope.$broadcast(APP_EVENTS.START_REQUEST);
     };
     
 }]);
@@ -129,6 +133,13 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
         $scope.values.files = $scope.values.files.filter(function(element){
             return element !== file;
         });
+    };
+    $scope.filesSizeSum = function(){
+        var result = 0;
+        for(var i=0, len=$scope.values.files.length; i<len;i++){
+            result += $scope.values.files[i].size;
+        }
+        return result;
     };
 }]);
 

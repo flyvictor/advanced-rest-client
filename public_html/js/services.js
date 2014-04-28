@@ -180,23 +180,7 @@ AppServices.factory('RequestParser', [function() {
             'headersToArray': headersToArray
         };
 }]);
-/**
- * @ngdoc overview
- * @name $RequestStore
- *
- * @description
- * Service to store and restore request values from selected source
- * (context dependet).
- * 
- * Chrome app can't use synchronius localStorage so it must use async 
- * chrome.storage object. It uses promises to handle async operations.
- */
-AppServices.factory('$RequestStore', ['RequestValues','$q',function(RequestValues, $q) {
-        var service = {};
-        
-        
-        return service;
-}]);
+
 /**
  * @ngdoc overview
  * @name $ChromeStorage
@@ -371,4 +355,336 @@ AppServices.factory('CodeMirror', ['RequestValues',function(RequestValues) {
         };
         
         return service;
+}]);
+
+/**
+ * Service to handle operation on current Request object.
+ * It is responsible for managing data synchronization between services and UI and for save/restore actions. 
+ */
+AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesystem','DBService', '$rootScope', 'APP_EVENTS',function($q,RequestValues,DriveService,Filesystem,DBService,$rootScope, APP_EVENTS) {
+        $rootScope.$on(APP_EVENTS.errorOccured, function(e, msg, reason){});
+        /**
+         * @ngdoc method
+         * @name ArcRequest.create
+         * @function
+         * 
+         * @description Create new ArcRequest object and populate with values.
+         * This function must be called before calling ArcRequest.save()
+         * to create save object.
+         * @param {Object} params Initial metadata for object.
+         *  'store_location' (String), required, - either 'history','local' or 'drive'
+         *  'name' (String), required if [store_location] is 'local' or 'drive',
+         *  'project_name' (String), optional - Associated project name.
+         * @example 
+         *  ArcRequest.create({'store_location': 'local','name':'My request'});
+         * 
+         * 
+         * @returns {undefined}
+         */
+        var create = function(params){
+            
+            if(!'store_location' in params){
+                throw "You must add store_location to create ArcRequest object";
+            }
+            if((params.store_location === 'local' || params.store_location === 'drive') && !params.name){
+                throw "You must specify file name to create ArcRequest object";
+            }
+            
+            service.current = {};
+            _fillCurrent();
+            service.current.store_location = params.store_location;
+            if(params.name){
+                service.current.name = params.name;
+            }
+            if(params.project_name){
+                service.current.project_name = params.project_name;
+            }
+        };
+        
+        var _fillCurrent = function(){
+            service.current.url = RequestValues.url;
+            service.current.method = RequestValues.method;
+            service.current.headers = RequestValues.headers.value;
+            service.current.payload = RequestValues.payload.value;
+            service.current.files = RequestValues.files;
+        };
+        
+        /**
+         * @ngdoc method
+         * @name ArcRequest.store
+         * @function
+         * 
+         * @description Store current object into selected storage (depending on 'store_location').
+         * 
+         * @example 
+         *  ArcRequest.store().then(function(storedObject){ ... });
+         * 
+         * 
+         * @returns {$q@call;defer.promise} The promise with stored object.
+         */
+        var store = function(){
+            var deferred = $q.defer();
+            if(service.current === null){
+                deferred.reject('There\'s no object to store.');
+                return deferred.promise;
+            }
+            var service;
+            switch(service.current.store_location){
+                case 'local': 
+                case 'history': service = Filesystem; break;
+                case 'drive': service = DriveService; break;
+                default:
+                    deferred.reject('Unknown store location :(');
+                    return deferred.promise;
+            }
+            
+            var onResult = function(result){
+                service.current = result;
+                deferred.resolve(result);
+            };
+            
+            service.store(service.current)
+            .then(DBService.store)
+            .then(onResult)
+            .catch(function(reason){
+                deferred.reject(reason);
+            });
+            return deferred.promise;
+        };
+        var service = {
+            /**
+             * restored object currently loaded into app
+             */
+            'current': null,
+            'create': create,
+            'store': store
+        };
+        return service;
+}]);
+/**
+ * Service responsible to manage Drive files.
+ */
+AppServices.factory('DriveService', ['$q',function($q) {
+    /**
+     * Google Drive item's mime type.
+     * @type String
+     */
+    var driveMime = 'application/restclient+data';
+    
+    /**
+     * @ngdoc method
+     * @name DriveService.store
+     * @function
+     * 
+     * @description Store data on Google Drive storage
+     * @param {DriveItem} driveItem Data to save as JSON String.
+     * 
+     *  @example 
+     *  DriveService.store(DriveItem);
+     *  
+     * @returns {$q@call;defer.promise} The promise with {DriveItem} object.
+     */
+    var store = function(driveItem){
+        var deferred = $q.defer();
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    /**
+     * @ngdoc method
+     * @name DriveService.restore
+     * @function
+     * 
+     * @description Restore data from Google Drive.
+     * @param {DriveObject} driveObject - Drive item info.
+     *
+     * @example 
+     *  DriveService.restore({DriveObject});
+     *
+     * @return {$q@call;defer.promise} The Promise object. Defered.then() function will return a DriveItem object.
+     */
+    var restore = function(driveObject){
+        var deferred = $q.defer();
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    
+    var service = {
+        'store': store,
+        'restore': restore
+    };
+    return service;
+}]);
+/**
+ * Service responsible to manage local files.
+ */
+AppServices.factory('Filesystem', ['$q',function($q) {
+    /**
+     * A directory where all requests objects files are stored.
+     * Currently Chrome supports only storing files in root folder (syncFileSystem). Issue has been reported. 
+     * @type String
+     */
+    var directory = '/';
+    /**
+     * @ngdoc method
+     * @name Filesystem.store
+     * @function
+     * 
+     * @description Store data on chrome's syncFilesystem
+     * @param {LocalItem} localItem Data to save, as JSON String.
+     * 
+     * @example 
+     *  Filesystem.store(LocalItem);
+     * 
+     * @returns {$q@call;defer.promise} The promise with {LocalItem} object.
+     */
+    var store = function(localItem){
+        var deferred = $q.defer();
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    /**
+     * @ngdoc method
+     * @name Filesystem.restore
+     * @function
+     * 
+     * @description Restore data from syncFilesystem.
+     * @param {FileObject} fileObject - local file item info.
+     *
+     * @example 
+     *  Filesystem.restore(FileObject);
+     *
+     * @return {$q@call;defer.promise} The Promise object. Defered.then() function will return a LocalItem object.
+     */
+    var restore = function(fileObject){
+        var deferred = $q.defer();
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    
+    var service = {
+        'store': store,
+        'restore': restore
+    };
+    return service;
+}]);
+/**
+ * Service responsible to manage local files.
+ */
+AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
+        
+    var store = function(item){
+        var deferred = $q.defer();
+        if(!item){
+            deferred.reject('Can\'t store object in database because object is undefined.');
+            return deferred.promise;
+        }
+        if(['local','history'].indexOf(item.store_location) === -1){
+            deferred.resolve(item);
+            return deferred.promise;
+        }
+        
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    var restore = function(object){
+        var deferred = $q.defer();
+        throw "Not yet implemented";
+        return deferred.promise;
+    };
+    
+    
+    var createKey = function(url,method,created){
+        var delim = ':';
+        var key = method + delim + url;
+        if(created){
+            key += delim + created;
+        }
+        return key;
+    };
+    
+    var listHistoryCandidates = function(url,method){
+        var deferred = $q.defer();
+        var store = $indexedDB.objectStore('request_store');
+        var query = $indexedDB.queryBuilder().$index('key').$lt(createKey(url,method)).$asc().compile();
+        store.each(query).then(function(cursor){
+            deferred.resolve(null);
+        }, function(reason){}, function(cursor){
+            
+        });
+        return deferred.promise;
+    };
+    
+    var service = {
+        'store': store,
+        'restore': restore,
+        'listHistoryCandidates': listHistoryCandidates
+    };
+    return service;
+}]);
+
+
+
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS) {
+    $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
+        runRequest();
+    });
+    
+    function runRequest(){
+        var deferred = $q.defer();
+        ensureCurrent().then(ArcRequest.store)
+            .then(function(){
+                console.log('SAVED!');
+            })
+            .catch(function(reason){
+                deferred.reject(reason);
+            });
+        return deferred.promise;
+    }
+    
+    function searchHistoryFormMatch(list){
+        if(!list) return null;
+        for(var i=0, len=list.length; i<len; i++){
+            var item = list[i].value;
+            
+            if(RequestValues.headers.value != item.headers.value){
+                continue;
+            }
+            if(RequestValues.payload.value != item.payload.value){
+                continue;
+            }
+            
+            return item;
+        }
+        return null;
+    }
+    
+    function ensureCurrent(){
+        var deferred = $q.defer();
+        
+        DBService.listHistoryCandidates(RequestValues.url,RequestValues.method)
+        .then(searchHistoryFormMatch)
+        .then(function(result){
+            if(!result){
+                ArcRequest.create({store_location:'history'});
+                deferred.resolve();
+            } else {
+                ArcRequest.restore(result.key)
+                    .then(function(){
+                        deferred.resolve();
+                    })
+                    .catch(function(reason){
+                        deferred.reject(reason);
+                    });
+            }
+        });
+        
+        
+        
+        return deferred.promise;
+    }
+    
+    var service = {
+       'run': runRequest 
+    };
+    return service;
 }]);

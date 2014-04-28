@@ -17,8 +17,8 @@
             <input type="url" class="form-control" id="requestUrl" placeholder="Enter request URL here" ng-model="values.url">
             
             <div class="input-group-btn">
-                <button type="button" class="btn btn-default" tabindex="0">Send</button>
-                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" tabindex="-1">
+                <button type="button" class="btn btn-primary" tabindex="0" ng-click="runRequest()">Send</button>
+                <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" tabindex="-1">
                     <span class="caret"></span>
                     <span class="sr-only">Options</span>
                 </button>
@@ -70,6 +70,7 @@
                 <tab heading="Files ({{values.files.length}})">
                     <div file-dropzone files="values.files"></div>
                     <div class="files-list">
+                        <p ng-if="values.files.length > 0">Files total size : <span class="files-total-size">{{filesSizeSum()|filesize}}</span></p>
                         <div class="item" ng-repeat="file in values.files" tooltip="size: {{file.size|filesize}}, modified: {{file.lastModifiedDate|date:'short'}}">
                             {{file.name}} <span class="badge" ng-click="removeFile(file)">x</span>
                         </div>

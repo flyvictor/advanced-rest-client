@@ -7,7 +7,11 @@ html{
 body {
     font-family: $font-main;
     color: $primary-color;
-    background-color: rgba(236, 236, 236, 1);
+    background-color: #EBEBEB;
+    font-size: 14px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 300;
 }
 html, body{
     height:100%;
@@ -52,6 +56,9 @@ html, body{
     }
     .container{
         flex: 1;
+    }
+    .btn {
+        font-weight: 300;
     }
 }
 
@@ -100,14 +107,17 @@ div.tab-content {
     -webkit-transition: -webkit-transform 0.3s;
 }
 label.collapse-form {
-    font-size: 12px;
+    /*font-size: 14px;*/
     color: $secondary-color;
+    font-weight: 300;
+    margin-bottom: 10px;
+    display: block;
 }
 .card {
     background-color: #fff;
     padding: 15px;
     border-radius: 5px;
-    border: 1px #E6E6E6 solid;
+    border: 1px #d8d8d8 solid;
     position: relative;
 }
 .form-action-bottom{
@@ -115,7 +125,7 @@ label.collapse-form {
 }
 
 .container .CodeMirror {
-    border: 1px #D8D8D8 solid;
+    border: 1px #F7F7F7 solid;
     height: auto;
     width: 100%;
     margin-top: 0;
@@ -147,7 +157,13 @@ label.collapse-form {
 .cursor-pointer{
     cursor: pointer;
 }
-
+.dropdown-menu > li > a.btn-primary {
+    color: #fff;
+    cursor:pointer;
+    &:hover{
+        background-color: #3276b1;
+    }
+}
 
 
 
@@ -173,8 +189,8 @@ label.collapse-form {
             border-left: none;
             border-right: none;
             border-radius: 0px;
-            border-top: 3px red solid;
-            font-weight: bold;
+            border-top: 3px rgb(255, 123, 123) solid;
+            font-weight: 400;
             padding-top: 8px;
             &:hover{
                 text-decoration: none;
@@ -185,7 +201,7 @@ label.collapse-form {
 }
 
 div.file-drop {
-    min-height: 100px;
+    min-height: 150px;
     width: 100%;
     border: 3px rgb(176, 176, 247) dashed;
     display: flex;
@@ -204,8 +220,9 @@ div.file-drop {
     }
     .drop-info {
         display: block;
-        font-size: 18px;
+        font-size: 20px;
         color: rgb(160, 160, 160);
+        font-weight: 400;
     }
     .fallback-options {
         display: inline-block;
@@ -215,6 +232,7 @@ div.file-drop {
             display: block;
             color: rgb(160, 160, 160);
             -webkit-transition: opacity 0.4s;
+            margin-top: 5px;
         }
         
         .btn{

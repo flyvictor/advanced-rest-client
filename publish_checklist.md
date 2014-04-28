@@ -1,0 +1,6 @@
+- Update manifest file and change version field
+- Pack app files into zip file
+- Double check packed files ad remove unnecessary files (duplicates of minified files, readme etc)
+- Update file on Developer console
+- Set range for 25%
+- After week change it to 100%
