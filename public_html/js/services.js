@@ -15,12 +15,21 @@ var AppServices = angular.module('arc.services', []);
 AppServices.factory('RequestValues', ['RequestParser',function(parser) {
     var service = {
         //current URL value
-        'url': 'http://127.0.0.1/test',
+        'url': 'https://www.google.com',
         //current HTTP method. GET by default.
-        'method': 'POST',
+        'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
         'headers': {
-            'value': [{'name':'Content-Type','value':'application/json'}]
+            'value': [
+                //{'name':'Content-Type','value':'application/json'},
+                {'name':'accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'},
+                {'name':'accept-encoding:gzip,deflate,sdch'},
+                {'name':'accept-language:pl,en-US;q=0.8,en;q=0.6'},
+                {'name':'cookie:SID=DQAAAN8AAAAr3_Q--v2AvRL09bBqCXXkHc_FLu19T2sVR4JCWUXRXfxQHc_shGMj4lN6q1IIpvtR9iGCST8qXrVGewEsqJ3FhsctlG5EZxGrc1UuPgjiQZYd8meMmq-WWA6MxA0wi4E2eCFqL4n9Ncxs-4CL1mN4sKNkHxKDMBqeKw_X3HtRaUod7WNT9C3C1xQCmRofPsefWYNzPNLaSlHuSc8Y3QGhLGlvfQz1cTwDC3R_8qg_qrXmOG75BU1eU1XeN86e8dRqH36WtwQvFlp0DLuKturkt7t07MP892rOcL2f9smXxw; HSID=AqZE5NAucoDQL_94i; SSID=AkE28Cn71paPAdI1Q; APISID=narelD2-EmEw0yIv/AMVePkj8LQXwks6Yx; SAPISID=-HCU8GuWMYiPkyd5/AGOxqNxNf2eY-wfkQ; NID=67=WIHky7tGXFz24iFHl5SUpHAeSGojXVqYRUE6S2u_IOJ2cby7KCqKltjFLaCCsu-kE341A_Tavh41YExyKwzS4MrUSlwpN3dBiSnuwBKr3Zmlj6pLfDCveQZCAYtlcs9g51XmeVk00OjiW28NW84DQgUjZB3t_esTHd4CA4KX0uRLrYgJzebWp7sdoI6LHlGFZMDOFEt-4D9jwiNB6zFwmgtm8g; PREF=ID=6bb40e39bbbc0e9a:U=92316fa1566e76d2:FF=0:LD=en:TM=1398712891:LM=1398810992:SG=1:S=KJWUcJBgnv1-3BXP'},
+                {'name':'user-agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
+                {'name':'x-chrome-uma-enabled:1'},
+                {'name':'x-client-data:CNK1yQEIibbJAQimtskBCKm2yQEIrJPKAQiPlMoB'}
+            ]
         },
         //payload is a string of data to send
         'payload': {
@@ -167,7 +176,10 @@ AppServices.factory('RequestParser', [function() {
                     };
                     if (_tmp.length > 1) {
                         _tmp.shift();
-                        obj.value = _tmp.join(':').trim();
+                        _tmp = _tmp.filter(function(element){
+                            return element.trim() !== '';
+                        });
+                        obj.value = _tmp.join(', ').trim();
                     }
                     result[result.length] = obj;
                 }
@@ -402,11 +414,13 @@ AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesyst
         };
         
         var _fillCurrent = function(){
-            service.current.url = RequestValues.url;
-            service.current.method = RequestValues.method;
-            service.current.headers = RequestValues.headers.value;
-            service.current.payload = RequestValues.payload.value;
-            service.current.files = RequestValues.files;
+            service.current.request = {
+                url: RequestValues.url,
+                method: RequestValues.method,
+                headers: RequestValues.headers.value,
+                payload: RequestValues.payload.value,
+                files: RequestValues.files
+            };
         };
         
         /**
@@ -450,6 +464,16 @@ AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesyst
                 deferred.reject(reason);
             });
             return deferred.promise;
+        };
+        /**
+         * It is similar to {service.store} but it will update data in indexedDB and create history object if none exists for current request.
+         * It will not force store for drive or local type items. They must be distinctly seved by the user.
+         * However, currently restored request object will still be stored in local storage for restoring latest request state. But if the object
+         * will be saved by the user local storage will be cleared and will hold only a reference to IndexedDb key.
+         * @returns {undefined}
+         */
+        var storeHistory = function(){
+            
         };
         var service = {
             /**
@@ -624,22 +648,109 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 
 
-AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS) {
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http) {
     $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
         runRequest();
     });
     
+    
+    
+    /**
+     * Order of events:
+     * 1) ensure that ArcRequest.current object exists. If not it should be created.
+     * 2) @TODO: Apply magic variables
+     * 3) Load HTTP Socket library, create request and set data
+     * 4) Mark current time and send the request
+     * 5) Wait for response
+     * 6) On response mark current time and calculate request time
+     * 7) Save request data into history
+     * 8) Display result.
+     * 
+     * @returns {$q@call;defer.promise}
+     */
     function runRequest(){
         var deferred = $q.defer();
-        ensureCurrent().then(ArcRequest.store)
-            .then(function(){
-                console.log('SAVED!');
-            })
+        
+        function onRequestObjectReady(request){
+            request.addEventListener('load', function(e){ 
+                console.log('LOADED',e);
+            }).addEventListener('error', function(e){ 
+                console.log('ERROR',e);
+                
+                if(e&&e[0]&&!!e[0].code){
+                    $http.get('data/connection_errors.json').then(function(result){
+                        if(result && result.data){
+                            if(e[0].code in result.data){
+                                console.error("Error occured:", result.data[e[0].code]);
+                                delete result.data;
+                            }
+                        }
+                    });
+                }
+                
+            }).addEventListener('timeout', function(e){ 
+                console.log('TIMEOUT',e);
+            }).addEventListener('start', function(e){ 
+                console.log('START',e);
+            }).addEventListener('progress', function(e){ 
+                console.log('PROGRESS',e);
+            }).addEventListener('uploadstart', function(e){ 
+                console.log('UPLOADSTART',e);
+            }).addEventListener('upload', function(e){ 
+                console.log('UPLOAD',e);
+            }).addEventListener('abort', function(e){ 
+                console.log('ABORT',e);
+            }).execute();
+        }
+        
+        
+        ensureCurrent()
+            .then(applyMagicVariables)
+            .then(createTheRequest)
+            .then(onRequestObjectReady)
             .catch(function(reason){
                 deferred.reject(reason);
             });
         return deferred.promise;
     }
+    
+    function applyMagicVariables(requestObject){
+        var deferred = $q.defer();
+        deferred.resolve(requestObject);
+        return deferred.promise;
+    }
+    
+    function createTheRequest(requestObject){
+        var deferred = $q.defer();
+        var uri = new URI(requestObject.request.url), port = uri.port();
+        var requestParams = {
+            'url': requestObject.request.url,
+            'method': requestObject.request.method,
+            'timeout': 30000,
+            'debug': true
+        };
+        if(port){
+            requestParams.port = port;
+        }
+        if(RequestValues.hasPayload() && requestObject.request.payload){
+            requestParams.body = requestObject.request.payload;
+        }
+        if(requestObject.request.headers.length > 0){
+            var _headers = {};
+            for(var i=0, len=requestObject.request.headers.length;i<len;i++){
+                var _h = requestObject.request.headers[i];
+                _headers[_h.name] = _h.value;
+            }
+            requestParams.headers = _headers;
+        }
+        var req = new HttpRequest(requestParams);
+        
+        deferred.resolve(req);
+        return deferred.promise;
+        
+    }
+    
+    
     
     function searchHistoryFormMatch(list){
         if(!list) return null;
@@ -666,7 +777,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
         .then(function(result){
             if(!result){
                 ArcRequest.create({store_location:'history'});
-                deferred.resolve();
+                deferred.resolve(ArcRequest.current);
             } else {
                 ArcRequest.restore(result.key)
                     .then(function(){
