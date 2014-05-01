@@ -369,6 +369,13 @@
 
             var context = this;
             this._connect(this._makeRequest.bind(this), function(connectInfo) {
+                
+                //
+                // Probably it's because URL doeas not exists. Or actually any other error that I'm not aware off.
+                // To be checked.
+                //
+                
+                
                 context.log('Can\'t create socket. Error code: ', connectInfo);
                 context.dispatchEvent('error', {
                     'code': connectInfo,
