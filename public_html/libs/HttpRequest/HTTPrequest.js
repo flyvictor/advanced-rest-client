@@ -182,7 +182,7 @@
         //setup URL data
         this._setURLdata();
 
-        //Request's response as an HttpResponse object.
+        //Request's response as a HttpResponse object.
         this.response = null;
 
         //socekt ID
