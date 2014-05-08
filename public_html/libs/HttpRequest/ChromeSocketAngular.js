@@ -236,15 +236,21 @@ angular.module('chrome.tcp', [])
     };
     
     ChromeTcpConnection.prototype.send = function(socketId){
+        var defered = $q.defer();
         if(!(socketId in this.connectionInfo)){
             throw "Unknown connection identifier";
         }
         var props = this.connectionInfo[socketId];
-        this._makeRequest(socketId,props);
+        this._makeRequest(socketId,props).then(defered.resolve, defered.reject);
+        return defered.promise;
     };
     
     ChromeTcpConnection.prototype._makeRequest = function(socketId,properties){
-        if(properties.connection.aborted) return;
+        var defered = $q.defer();
+        if(properties.connection.aborted) {
+            defered.reject(null);
+            return defered.promise;
+        }
         if (!properties.connection.readyState === 0) {
             this.dispatchEvent('error', {
                 'code': '0',
@@ -257,8 +263,10 @@ angular.module('chrome.tcp', [])
         this._prepageMessageBody()
         .then(this._writeMessage.bind(this,socketId))
         .then(function(written){
-            
+            console.info('HTTP message send: (bytes) ', written);
+            defered.resolve(null);
         });
+        return defered.promise;
     };
     
     ChromeTcpConnection.prototype._prepageMessageBody = function(properties){
@@ -338,7 +346,16 @@ angular.module('chrome.tcp', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._socketReceived = function(info){
+        if(!(info.socketId in connectionInfo)){
+            return;
+        }
         
+        if(info.data){
+            console.info(performance.now(), 'Read socket data.');
+            console.info(performance.now(), 'Has part of the message');
+            this.dispatchEvent('progress', {});
+            this._handleMessage(info.socketId, info.data);
+        }
     };
     /**
      * 
@@ -348,7 +365,9 @@ angular.module('chrome.tcp', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._socketReceivedError = function(info){
-        
+        console.error(performance.now(), 'Disconnected or end of message.',info.resultCode);
+        this._cleanUpResponse(info.socketId);
+        this._close(info.socketId);
     };
     
     /**
