@@ -13,9 +13,13 @@
         "storage",
         "unlimitedStorage",
         "syncFileSystem",
-        "clipboardWrite",
-        {"socket": ["tcp-connect:*:*"]}
+        "clipboardWrite"
     ],
+    "sockets": {
+        "tcp": {
+            "connect": "*"
+        }
+    },
     "oauth2": {
         "client_id": "10525470235-vtm8ckt9v43r1gbbjqhp01tnnr0ol41j.apps.googleusercontent.com",
         "scopes": [

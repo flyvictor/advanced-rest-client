@@ -16,7 +16,8 @@ var RestClient = angular.module('RestClient', [
   'arc.controllers',
   'ui.bootstrap',
   'ui.codemirror',
-  'xc.indexedDB'
+  'xc.indexedDB',
+  'chrome.http'
 ]);
 
 RestClient.value('version', '0.1');

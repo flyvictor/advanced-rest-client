@@ -15,25 +15,25 @@ var AppServices = angular.module('arc.services', []);
 AppServices.factory('RequestValues', ['RequestParser',function(parser) {
     var service = {
         //current URL value
-        'url': 'https://www.google.com',
+        'url': 'http://www.kalicinscy.com', //https://www.google.com
         //current HTTP method. GET by default.
         'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
         'headers': {
             'value': [
                 //{'name':'Content-Type','value':'application/json'},
-                {'name':'accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'},
-                {'name':'accept-encoding:gzip,deflate,sdch'},
-                {'name':'accept-language:pl,en-US;q=0.8,en;q=0.6'},
-                {'name':'cookie:SID=DQAAAN8AAAAr3_Q--v2AvRL09bBqCXXkHc_FLu19T2sVR4JCWUXRXfxQHc_shGMj4lN6q1IIpvtR9iGCST8qXrVGewEsqJ3FhsctlG5EZxGrc1UuPgjiQZYd8meMmq-WWA6MxA0wi4E2eCFqL4n9Ncxs-4CL1mN4sKNkHxKDMBqeKw_X3HtRaUod7WNT9C3C1xQCmRofPsefWYNzPNLaSlHuSc8Y3QGhLGlvfQz1cTwDC3R_8qg_qrXmOG75BU1eU1XeN86e8dRqH36WtwQvFlp0DLuKturkt7t07MP892rOcL2f9smXxw; HSID=AqZE5NAucoDQL_94i; SSID=AkE28Cn71paPAdI1Q; APISID=narelD2-EmEw0yIv/AMVePkj8LQXwks6Yx; SAPISID=-HCU8GuWMYiPkyd5/AGOxqNxNf2eY-wfkQ; NID=67=WIHky7tGXFz24iFHl5SUpHAeSGojXVqYRUE6S2u_IOJ2cby7KCqKltjFLaCCsu-kE341A_Tavh41YExyKwzS4MrUSlwpN3dBiSnuwBKr3Zmlj6pLfDCveQZCAYtlcs9g51XmeVk00OjiW28NW84DQgUjZB3t_esTHd4CA4KX0uRLrYgJzebWp7sdoI6LHlGFZMDOFEt-4D9jwiNB6zFwmgtm8g; PREF=ID=6bb40e39bbbc0e9a:U=92316fa1566e76d2:FF=0:LD=en:TM=1398712891:LM=1398810992:SG=1:S=KJWUcJBgnv1-3BXP'},
-                {'name':'user-agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
-                {'name':'x-chrome-uma-enabled:1'},
-                {'name':'x-client-data:CNK1yQEIibbJAQimtskBCKm2yQEIrJPKAQiPlMoB'}
+//                {'name':'accept', 'value':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'},
+//                {'name':'accept-encoding', 'value':'gzip,deflate,sdch'},
+//                {'name':'accept-language','value':'pl,en-US;q=0.8,en;q=0.6'},
+//                {'name':'cookie','value':'SID=DQAAAN8AAAAr3_Q--v2AvRL09bBqCXXkHc_FLu19T2sVR4JCWUXRXfxQHc_shGMj4lN6q1IIpvtR9iGCST8qXrVGewEsqJ3FhsctlG5EZxGrc1UuPgjiQZYd8meMmq-WWA6MxA0wi4E2eCFqL4n9Ncxs-4CL1mN4sKNkHxKDMBqeKw_X3HtRaUod7WNT9C3C1xQCmRofPsefWYNzPNLaSlHuSc8Y3QGhLGlvfQz1cTwDC3R_8qg_qrXmOG75BU1eU1XeN86e8dRqH36WtwQvFlp0DLuKturkt7t07MP892rOcL2f9smXxw; HSID=AqZE5NAucoDQL_94i; SSID=AkE28Cn71paPAdI1Q; APISID=narelD2-EmEw0yIv/AMVePkj8LQXwks6Yx; SAPISID=-HCU8GuWMYiPkyd5/AGOxqNxNf2eY-wfkQ; NID=67=WIHky7tGXFz24iFHl5SUpHAeSGojXVqYRUE6S2u_IOJ2cby7KCqKltjFLaCCsu-kE341A_Tavh41YExyKwzS4MrUSlwpN3dBiSnuwBKr3Zmlj6pLfDCveQZCAYtlcs9g51XmeVk00OjiW28NW84DQgUjZB3t_esTHd4CA4KX0uRLrYgJzebWp7sdoI6LHlGFZMDOFEt-4D9jwiNB6zFwmgtm8g; PREF=ID=6bb40e39bbbc0e9a:U=92316fa1566e76d2:FF=0:LD=en:TM=1398712891:LM=1398810992:SG=1:S=KJWUcJBgnv1-3BXP'},
+//                {'name':'user-agent','value':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
+//                {'name':'x-chrome-uma-enabled','value':'1'},
+//                {'name':'x-client-data','value':'CNK1yQEIibbJAQimtskBCKm2yQEIrJPKAQiPlMoB'}
             ]
         },
         //payload is a string of data to send
         'payload': {
-            'value': '{\n\t\'a\': \'b\'\n}'
+            'value': null, //'{\n\t\'a\': \'b\'\n}'
         },
         //array of FileObjects
         'files': []
@@ -648,7 +648,7 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 
 
-AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http) {
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp) {
     $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
         runRequest();
     });
@@ -689,18 +689,18 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
                 }
                 
             }).addEventListener('timeout', function(e){ 
-                console.log('TIMEOUT',e);
+                //console.log('TIMEOUT',e);
             }).addEventListener('start', function(e){ 
-                console.log('START',e);
+                //console.log('START',e);
             }).addEventListener('progress', function(e){ 
-                console.log('PROGRESS',e);
+               // console.log('PROGRESS',e);
             }).addEventListener('uploadstart', function(e){ 
-                console.log('UPLOADSTART',e);
+                //console.log('UPLOADSTART',e);
             }).addEventListener('upload', function(e){ 
-                console.log('UPLOAD',e);
+                //console.log('UPLOAD',e);
             }).addEventListener('abort', function(e){ 
                 console.log('ABORT',e);
-            }).execute();
+            }).send();
         }
         
         
@@ -722,16 +722,14 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
     
     function createTheRequest(requestObject){
         var deferred = $q.defer();
-        var uri = new URI(requestObject.request.url), port = uri.port();
+        
         var requestParams = {
             'url': requestObject.request.url,
             'method': requestObject.request.method,
             'timeout': 30000,
             'debug': true
         };
-        if(port){
-            requestParams.port = port;
-        }
+        
         if(RequestValues.hasPayload() && requestObject.request.payload){
             requestParams.body = requestObject.request.payload;
         }
@@ -743,7 +741,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             }
             requestParams.headers = _headers;
         }
-        var req = new HttpRequest(requestParams);
+        var req = ChromeTcp.create(requestParams);
         
         deferred.resolve(req);
         return deferred.promise;

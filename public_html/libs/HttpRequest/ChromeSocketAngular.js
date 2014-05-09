@@ -14,15 +14,92 @@
  * limitations under the License.
  */
 
-angular.module('chrome.tcp', [])
+angular.module('chrome.http', [])
 .factory('ChromeTcp', ['$q',function($q){
     
-    function ChromeTcpConnection(){
+    
+    /**
+     * The response object.
+     * @returns {HttpResponse}
+     */
+    function HttpResponse() {
+        //Response status code. Eg: 200
+        this.status = 0;
+        //Response status text. Eg: OK
+        this.statusText = '';
+        //Response headers
+        this.headers = [];
+        //The response.
+        this.response = null;
+    }
+    HttpResponse.prototype = {
         /**
-         * Connections object.
-         * Key value is a socket ID. Value is object created by this._createProperties function.
+         * Returns all headers from the response.
+         * @returns {String} Source of the headers. Each header is in new line. Values are separated from names by ':'.
          */
-        this.connectionInfo = {};
+        getAllResponseHeaders: function() {
+            var result = '';
+            for (var i = 0, len = this.headers.length; i < len; i++) {
+                var header = this.headers[i];
+                if (!header || !header.name)
+                    continue;
+                result += header.name + ': ' + header.value + '\n';
+            }
+            return result;
+        },
+        /**
+         * Returns the header field value from the response.
+         * @param {String} name - Case insensive header name.
+         * @returns {String|null} - Value of the header or null if not found
+         */
+        getResponseHeader: function(name) {
+            var headerValue = null, lowerName = name.toLowerCase();
+            for (var i = 0, len = this.headers.length; i < len; i++) {
+                var header = this.headers[i];
+                if (!header || !header.name || (header.name.toLowerCase() !== lowerName))
+                    continue;
+                headerValue = header.value;
+            }
+            return headerValue;
+        }
+    };
+    
+    
+    
+    
+    /**
+     * 
+     * @param {Object} options Request options:
+     *  Required (String) url - Request URL
+     *  Required (String) method- Request method
+     *  Optional (Object|String) 'headers' - An object where key is header name and value is header value. If "headers" is a String it will be passed to the request body as is. Default empty object.
+     *  Optional (String) 'body' - Request payload. Should not be set if request does not allow to carry a payload. TODO: allow file upload. Default null.
+     *  Optional (int) 'timeout' - Request timeout. After this time request will be aborted and timeout and abort event fired. Default 0 - no timeout.
+     *  Optional (bool) 'fallowredirects' - If false the request will fire load event when firest redirect occure. Default true.
+     *  Optional (bool) 'debud' - Enable debug messages in console output. Default false. TODO: not yet implemented.
+     *  Optional (Object) 'on' - event listeners for the request:
+     *      (Function) 'load' - fired on request end
+     *      (Function) 'error' - fired on request error
+     *      (Function) 'progress' - fired when part of response data arrive
+     *      (Function) 'start' - fired when the request start.
+     *      (Function) 'uploadstart' - fired when request payload is about to send.
+     *      (Function) 'upload' - firead when the request payload has been sent.
+     *      (Function) 'timeout' - fired on timeout
+     *      (Function) 'abort' - fired either with timeout or when the user (or the app) interrupt.
+     *  
+     * @returns {_L18.ChromeTcpConnection}
+     */
+    function ChromeTcpConnection(options){
+        
+        if(typeof Zlib === 'undefined'){
+            throw "Library Zlib is required by this API.";
+        }
+        
+        this.debug = false;
+        /*
+         Connection properties object.
+         */
+        this._createProperties(options);
         //Carriage Return character
         this.CR = '\n';
         /**
@@ -32,36 +109,7 @@ angular.module('chrome.tcp', [])
         
         this._registerSocketCallbacks();
     }
-    /**
-     * Create a new connection.
-     * This method will open a new socket 
-     * @param {Object} options
-     * @returns {$q@call;defer.promise}
-     *  .resolve() function will return socket identifier which should be used with this.send() function.
-     */
-    ChromeTcpConnection.prototype.createConnection = function(options){
-        var defered = $q.defer();
-        var context = this;
-        var properties = this._createProperties(options);
-        this._connect(properties.request.uri.host,properties.request.uri.port)
-                .then(function(socketId){
-                    console.log('Connected to socked for host: ', properties.request.uri.host, ' and port ', properties.request.uri.port);
-                    properties.connection.readyState = 1;
-                    properties.connection.connected = true;
-                    context[socketId] = properties;
-                    defered.resolve(socketId);
-                })
-                .catch(function(reason){
-                    context.error('Can\'t create socket. Error code: ', reason);
-                    defered.reject({
-                        'code': reason,
-                        'message': 'Connection refused.'
-                    });
-                });
-        
-        
-        return defered.promise;
-    };
+    
     /**
      * Create connection properties object.
      * This class object can hold many connections at once. This method creates
@@ -111,109 +159,172 @@ angular.module('chrome.tcp', [])
             uriData.request_path = '/';
         }
         
-        var properties = {
-            readyState: 0,
-            debug: options.debug,
-            connection: {
-                /**
-                 * Flag if socket is connected.
-                 * @type Boolean
-                 */
-                connected: false,
-                /**
-                 * Flag is connection error
-                 * @type Boolean
-                 */
-                error: false,
-                /**
-                 * Is connection timeout
-                 * @type Boolean
-                 */
-                isTimeout: false,
-                /**
-                 * Response length from Content-length header or chunk size if Transfer-Encoding is chunked
-                 * @type Number
-                 */
-                _responseSuspectedLength: 0,
-                /**
-                 * Read response length. 
-                 * It should be set to 0 after new chunk of response arrives.
-                 * @type Number
-                 */
-                _responseRead: 0,
-                /**
-                 * Determine if the request has been aborted either because of timeout or this.abort();
-                 * @type Boolean
-                 */
-                aborted: false
-            },
+        this.debug = options.debug;
+        
+        /**
+         * Connection properties
+         */
+        this.connection = {
             /**
-             * Request properties
+             * Flag if socket is connected.
+             * @type Boolean
              */
-            'request': {
-                uri: uriData,
-                /**
-                 * HTTP request data
-                 */
-                data: {
-                    'url': options.url,
+            connected: false,
+            /**
+             * Flag is connection error
+             * @type Boolean
+             */
+            error: false,
+            /**
+             * Error message if any.
+             */
+            message: null,
+            /**
+             * Is connection timeout
+             * @type Boolean
+             */
+            isTimeout: false,
+            /**
+             * Determine if the request has been aborted either because of timeout or this.abort();
+             * @type Boolean
+             */
+            aborted: false,
+            /**
+             * Timeout set for request.
+             */
+            timeoutTimer: null,
+            /**
+             * Connection's ready state
+             */
+            readyState: 0,
+            /**
+             * Created socket ID.
+             */
+            socketId: null,
+            /**
+             * Flag, is response is chunked.
+             */
+            chunked: false
+        };
+        /**
+         * Request properties
+         */
+         this.request = {
+            /**
+             * The URI object.
+             */
+            uri: uriData,
+            /**
+             * HTTP request data
+             */
+            data: {
+            'url': options.url,
                     'method': options.method,
                     'headers': options.headers,
                     'payload': options.payload
-                },
-                /**
-                 * Message that will be send to the server
-                 */
-                'message': ''
             },
             /**
-             * Response properties
+             * Message that will be send to the server
              */
-            'response': {
-                /**
-                 * Declared by the response content length
-                 * @type Number
-                 */
-                'contentLength': null,
-                /**
-                 * Declared by the response transfer encoding.
-                 * It is required to determine compression method (if any).
-                 * @type String
-                 */
-                'transferEncoding': null,
-                /**
-                 * Determine if response headers has been already received
-                 * @type Boolean
-                 */
-                'hasHeaders': false,
-                /**
-                 * Only if response payload contain information about it's length.
-                 * @type Number
-                 */
-                'suspectedLength': 0,
-                /**
-                 * An information how much response has been already read.
-                 * @type Number
-                 */
-                'responseRead': 0,
-                /**
-                 * Response buffer
-                 * @type ArrayBuffer
-                 */
-                payload: [],
-                /**
-                 * When Transfer-Encoding header value is equal chunked
-                 * it will hold an array of whole chunk.
-                 * After full chunk is received it should be added to this.payload array
-                 * @type Uint8Array
-                 */
-                chunkPayload: null
-            }
+            'message': '',
+            'timeout': options.timeout
+        };
+        /**
+         * Response properties
+         */
+        this.response = {
+            /**
+             * Declared by the response content length
+             * @type Number
+             */
+            'contentLength': null,
+            /**
+             * Declared by the response transfer encoding.
+             * It is required to determine compression method (if any).
+             * @type String
+             */
+            'transferEncoding': null,
+            /**
+             * Determine if response headers has been already received
+             * @type Boolean
+             */
+            'hasHeaders': false,
+            /**
+             * Only if response payload contain information about it's length.
+             * Response length from Content-length header or chunk size if Transfer-Encoding is chunked.
+             * @type Number
+             */
+            'suspectedLength': 0,
+            /**
+             * An information how much response has been already read.
+             * It should be set to 0 after new chunk of response arrives.
+             * @type Number
+             */
+            'responseRead': 0,
+            /**
+             * Response buffer
+             * @type ArrayBuffer
+             */
+            payload: [],
+            /**
+             * When Transfer-Encoding header value is equal chunked
+             * it will hold an array of whole chunk.
+             * After full chunk is received it should be added to this.payload array
+             * @type Uint8Array
+             */
+            chunkPayload: null,
+            /**
+             * A response object returned by the client.
+             */
+            data: null,
+            /**
+             * If response header message is grater than socket buffer size
+             * this field will be used to keep previous response.
+             * @type Unit8Array
+             */
+            tmpResponse: null
         };
         
+        //setup listeners
+        
+        angular.forEach(options.on, function(fn,type){
+            if(typeof fn !== 'function'){
+                console.warn('fn is not a function', fn)
+                return;
+            }
+            this.addEventListener(type, fn);
+        }, this);
+    };
+    
+    /**
+     * Create a new connection.
+     * This method will open a new socket 
+     * 
+     * @returns {$q@call;defer.promise}
+     *  .resolve() function will return socket identifier which should be used with this.send() function.
+     */
+    ChromeTcpConnection.prototype._createConnection = function(){
+        var defered = $q.defer();
+        var context = this;
+        
+        this._connect(this.request.uri.host, this.request.uri.port)
+            .then(function(socketId){
+                console.log('Connected to socked for host: ', context.request.uri.host, ' and port ', context.request.uri.port);
+                context.connection.readyState = 1;
+                context.connection.connected = true;
+                context.connection.socketId = socketId;
+                defered.resolve();
+            })
+            .catch(function(reason){
+                context.error('Can\'t create socket. Error code: ', reason);
+                defered.reject({
+                    'code': reason,
+                    'message': 'Connection refused.'
+                });
+            });
         
         
-        return properties;
+        return defered.promise;
     };
     
     ChromeTcpConnection.prototype._connect = function(host, port){
@@ -221,8 +332,10 @@ angular.module('chrome.tcp', [])
         
         chrome.sockets.tcp.create({}, function(createInfo){
             var socketId = createInfo.socketId;
-            console.log('Created socket with socketId: ',socketId);
+            console.info('Created socket with socketId: ',socketId);
+            console.info('Connecting to host : ', host, 'on port: ', port);
             chrome.sockets.tcp.connect(socketId, host, port, function(result){
+                console.info('Connected to host : ', host, 'on port: ', port, 'using socket: ', socketId);
                 if (result >= 0) {
                     defered.resolve(socketId);
                 } else {
@@ -235,33 +348,74 @@ angular.module('chrome.tcp', [])
         return defered.promise;
     };
     
-    ChromeTcpConnection.prototype.send = function(socketId){
+    ChromeTcpConnection.prototype.send = function(){
+        var context = this;
         var defered = $q.defer();
-        if(!(socketId in this.connectionInfo)){
-            throw "Unknown connection identifier";
-        }
-        var props = this.connectionInfo[socketId];
-        this._makeRequest(socketId,props).then(defered.resolve, defered.reject);
+        this._createConnection()
+            .then(this._makeRequest.bind(this))
+            .then(function(result){
+                context._setupTimeout();
+                defered.resolve();
+            })
+            .catch(defered.reject);
         return defered.promise;
+
+//        var context = this;
+//        this._prepageMessageBody().then(function(){
+//            
+//            var buffer = new ArrayBuffer(context.request.message.length);
+//            var bufferView = new Uint8Array(buffer);
+//            for (var i = 0; i < context.request.message.length; i++) {
+//                bufferView[i] = context.request.message.charCodeAt(i);
+//            }
+//            
+//            chrome.sockets.tcp.create({}, function(info) {
+//                var socketId = info.socketId;
+//                
+//                context.connection.readyState = 1;
+//                context.connection.connected = true;
+//                context.connection.socketId = socketId;
+//                
+//                chrome.sockets.tcp.connect(socketId, context.request.uri.host, context.request.uri.port, function(result){ 
+//                    if(result < 0) {
+//                        console.error('Error in connection'); 
+//                        return;
+//                    };
+//                    
+//                    
+//                    chrome.sockets.tcp.send(socketId, buffer, function(result){
+//                        if(result.resultCode < 0) {
+//                            console.error('Error in connection'); 
+//                            return;
+//                        };
+//                    });
+//                    
+//                    
+//                });
+//                
+//            });
+//            
+//            
+//        });
+
     };
     
-    ChromeTcpConnection.prototype._makeRequest = function(socketId,properties){
+    ChromeTcpConnection.prototype._makeRequest = function(){
         var defered = $q.defer();
-        if(properties.connection.aborted) {
+        if(this.connection.aborted) {
             defered.reject(null);
             return defered.promise;
         }
-        if (!properties.connection.readyState === 0) {
+        if (!this.connection.readyState === 0) {
             this.dispatchEvent('error', {
                 'code': '0',
-                'message': 'Trying to make a request on inactive socket',
-                'socketId': socketId
+                'message': 'Trying to make a request on inactive socket'
             });
             throw 'Trying to make a request on inactive socket'; 
         }
         
         this._prepageMessageBody()
-        .then(this._writeMessage.bind(this,socketId))
+        .then(this._writeMessage.bind(this))
         .then(function(written){
             console.info('HTTP message send: (bytes) ', written);
             defered.resolve(null);
@@ -269,23 +423,23 @@ angular.module('chrome.tcp', [])
         return defered.promise;
     };
     
-    ChromeTcpConnection.prototype._prepageMessageBody = function(properties){
+    ChromeTcpConnection.prototype._prepageMessageBody = function(){
         var defered = $q.defer();
         
-        if(properties.connection.aborted) {
-            defered.resolve(properties);
+        if(this.connection.aborted) {
+            defered.resolve();
             return defered.promise;
         }
         var message = '';
-        message = properties.request.data.method + ' ' + properties.request.uri.request_path + ' HTTP/1.1' + this.CR;
-        message += 'Host: ' + properties.request.uri.host + this.CR;
-        if (properties.request.data.headers) {
-            if (typeof properties.request.data.headers === 'string') {
-                message += properties.request.data.headers;
+        message = this.request.data.method + ' ' + this.request.uri.request_path + ' HTTP/1.1' + this.CR;
+        message += 'Host: ' + this.request.uri.host + this.CR;
+        if (this.request.data.headers) {
+            if (typeof this.request.data.headers === 'string') {
+                message += this.request.data.headers;
             } else {
-                for (var key in properties.request.data.headers) {
-                    if (properties.request.data.headers.hasOwnProperty(key) && typeof properties.request.data.headers[key] !== 'object') {
-                        message += key + ': ' + properties.request.data.headers[key] + this.CR;
+                for (var key in this.request.data.headers) {
+                    if (this.request.data.headers.hasOwnProperty(key) && typeof this.request.data.headers[key] !== 'object') {
+                        message += key + ': ' + this.request.data.headers[key] + this.CR;
                     }
                 }
             }
@@ -293,30 +447,33 @@ angular.module('chrome.tcp', [])
         
         //@TODO
         //Other than String request body
-        if (properties.request.data.body) {
-            message += 'Content-Length: ' + this._lengthInUtf8Bytes(properties.request.data.body) + this.CR;
+        if (this.request.data.body) {
+            message += 'Content-Length: ' + this._lengthInUtf8Bytes(this.request.data.body) + this.CR;
             message += this.CR;
-            message += properties.request.data.body;
+            message += this.request.data.body;
         }
         message += this.CR;
         console.info('Created message body: ', message);
         
-        properties.request.message = message;
-        defered.resolve(properties);
+        this.request.message = message;
+        defered.resolve();
         return defered.promise;
     };
-    ChromeTcpConnection.prototype._writeMessage = function(socketId, properties){
+    ChromeTcpConnection.prototype._writeMessage = function(){
         var defered = $q.defer();
-        if(properties.connection.aborted) {
-            defered.resolve(properties);
+        if(this.connection.aborted) {
+            defered.resolve();
             return defered.promise;
         }
-        this.dispatchEvent('uploadstart', {socketId:socketId});
-        properties.connection.readyState = 2;
-        if (!(properties.request.message instanceof ArrayBuffer)) {
-            properties.request.message = this._stringToArrayBuffer(properties.request.message);
+        this.dispatchEvent('uploadstart', {});
+        this.connection.readyState = 2;
+        if (!(this.request.message instanceof ArrayBuffer)) {
+            this.request.message = this._stringToArrayBuffer(this.request.message);
         }
-        chrome.sockets.tcp.send(socketId, properties.request.message, function(sendInfo) {
+        var context = this;
+        chrome.sockets.tcp.send(this.connection.socketId, this.request.message, function(sendInfo) {
+            console.info('Sent message to peer using socket #', context.connection.socketId, ', payload: ', context.request.message, ' with result: ', sendInfo);
+            context.dispatchEvent('upload', {});
             if (sendInfo.resultCode < 0) {
                 defered.reject({
                     'code': sendInfo.resultCode
@@ -327,11 +484,16 @@ angular.module('chrome.tcp', [])
         });
         return defered.promise;
     };
+    
+    
     /**
      * Register callback functions for socket.
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._registerSocketCallbacks = function(){
+        /**
+         * TODO: clean listeners on close.!!!! or it will cause a memory leak because current object still will be alive.
+         */
         chrome.sockets.tcp.onReceive.addListener(this._socketReceived.bind(this));
         /*
          * Event raised when a network error occured while the runtime was waiting for data on the socket address and port. Once this event is raised, the socket is set to paused and no more onReceive events are raised for this socket.
@@ -346,17 +508,409 @@ angular.module('chrome.tcp', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._socketReceived = function(info){
-        if(!(info.socketId in connectionInfo)){
+        
+        if(this.connection.socketId !== info.socketId){
+            console.warn('Has different socket response than suposed.');
             return;
         }
         
         if(info.data){
-            console.info(performance.now(), 'Read socket data.');
-            console.info(performance.now(), 'Has part of the message');
+//            console.info(performance.now(), 'Read socket data.');
+//            console.info(performance.now(), 'Has part of the message');
+            //@TODO: move this event into place where read count is ready.
             this.dispatchEvent('progress', {});
-            this._handleMessage(info.socketId, info.data);
+            //chrome.sockets.tcp.setPaused(this.connection.socketId, true);
+            this._handleMessage(info.data);
+            //chrome.sockets.tcp.setPaused(this.connection.socketId, false);
         }
     };
+    /**
+     * Handle response from socket.
+     * It may not be complete response. If Transfer-Encoding == 'chunked' then message may be split to many messages so there is no sure that this is full response body.
+     * Response body starts with HTTP status, headers list and the payload.
+     * This method will extract message body, status and headers and save it to later fields. 
+     * If there is no status line it means that this is another part of the response and it should append payload to proper field.
+     * 
+     * @param {ArrayBuffer} response
+     * @returns {undefined}
+     */
+    ChromeTcpConnection.prototype._handleMessage = function(response){
+       
+        if(this.connection.aborted) return;
+        var array = new Uint8Array(response);
+        
+        
+//        var str = '';
+//        for (var i = 0; i < array.length; ++i) {
+//            str += String.fromCharCode(array[i]);
+//        }
+//        console.group('Part of message');
+//        console.log(str);
+//        console.groupEnd();
+        
+        
+        if (!this.response.hasHeaders) {
+            console.info('!!!! DO NOT HAVE A HEADERS !!!!');
+            if(this.response.tmpResponse !== null){
+                var newLength = this.response.tmpResponse.length + array.length;
+                var newArray = new Uint8Array(newLength);
+                newArray.set(this.response.tmpResponse);
+                newArray.set(array, this.response.tmpResponse.length);
+                array = newArray;
+                this.response.tmpResponse = null;
+            }
+            
+            array = this._readResponseHeaders(array);
+            
+            if(this.connection.error){
+                this.connection.aborted = true;
+                console.log('Connection error', this);
+                // TODO: error report.
+                return;
+            }
+            
+            if(!this.response.hasHeaders){
+                // no full headers response yet
+                if(this.response.tmpResponse === null){
+                    this.response.tmpResponse = array;
+                } else {
+                    this.response.tmpResponse.set(array);
+                }
+                return;
+            } else {
+                console.log('Response headers ready', this.response.data.headers);
+            }
+            this.response.chunkPayload = new Uint8Array(this.response.suspectedLength);
+        }
+        
+        
+        
+//        if(this.response.suspectedLength === -1){
+//            this.dispatchEvent('error', {
+//                'code': 0,
+//                'message': 'The response is incomplete. It does not contain any information about it\'s size.'
+//            });
+//            return;
+//        }
+        
+        try {
+            this._readPayloadData(array);
+        } catch (e) {
+            this.dispatchEvent('error', {
+                'code': 0,
+                'message': 'The program was unable to read input data properly. ' + e.message
+            });
+            return;
+        }
+
+        if (this.response.responseRead === this.response.suspectedLength) {
+            var responseStr = this._getMessageString();
+//            console.log('responseStr',responseStr);
+            this.response.data.response = responseStr;
+//            this.response.data.response = this._getMessageString();
+            this._close();
+            this._cleanUpResponse();
+            this._onResponseReady();
+        }
+    };
+    /**
+     * Read headers data from bytes array.
+     * Read until CRCR occur (ANCII 13+10+13+10 sentence)
+     * 
+     * This method can't be asynchronius. 
+     * If this function will release event loop it will cause new response part 
+     * to arrive without setting current one.
+     * 
+     * @param {Uint8Array} array
+     * @returns {number} Position of the array where headers ends
+     */
+    ChromeTcpConnection.prototype._readResponseHeaders = function(array){
+        if(this.connection.aborted) return;
+        
+        //
+        // Looking for CR CR characters. It is a delimiter for HTTP status message 
+        //
+        
+        var foundDelim = false;
+        var i = 0;
+        for (; i < array.length; ++i) {
+            if (array[i] === 13) {
+                //we have candidate!
+                if (array[i + 1] === 10) {
+                    //no big deal, regular CR
+                    if (array[i + 2] === 13) {
+                        if (array[i + 3] === 10) {
+                            //it is CRCR
+                            foundDelim = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        //
+        // If not found whole current message is only part of status message.
+        // Wait until next part arrive.
+        //
+        if(!foundDelim){
+            console.log('Not found delimiter');
+            return array;
+        }
+        
+        
+        //
+        // The app has found HTTP status message.
+        // Read it, set response status, headers, truncate the array and return it.
+        //
+        
+        var status = null, statusMessage = null, statusLine = null, headers = [];
+        
+        // truncate array from start to the delimiter (CRCR) place.
+        var headersArray = array.subarray(0, i);
+        var headersMessage = this._arrayBufferToString(headersArray);
+        console.info('Response message: ', headersMessage);
+        var splitted = headersMessage.split('\n');
+        
+        //
+        // A first line is the status. Rest of it are headers.
+        //
+        var status_line = splitted.shift();
+        console.info('Response\'s first line: ', status_line);
+        statusLine = status_line.replace(/HTTP\/\d(\.\d)?\s/, '');
+        status = statusLine.substr(0, statusLine.indexOf(' '));
+        
+        try {
+            status = parseInt(status);
+        } catch (e) {
+            console.error('Status line is not valid: ', status_line);
+            this.connection.error = true;
+            this.connection.message = "Response doeas not contain status message.";
+            return null;
+        }
+        
+        statusMessage = statusLine.substr(statusLine.indexOf(' ') + 1);
+        
+        console.info('Response status: ', status, statusMessage, statusLine);
+        
+        ///
+        /// Read a response headers
+        ///
+        for (var j = 0, len = splitted.length; j < len; j++) {
+            var _header = splitted[j];
+            var _tmp = _header.split(/:\s/);
+            var key = _tmp.shift();
+            var o = {
+                'name': key,
+                'value': (_tmp.join(': ')).trim()
+            };
+            headers[headers.length] = o;
+        }
+        console.info('Response headers: ', headers);
+        this.response.hasHeaders = true;
+        /// 
+        /// Create a response object 
+        ///
+        this.response.data = new HttpResponse();
+        this.response.data.headers = headers;
+        this.response.data.status = status;
+        this.response.data.statusText = statusMessage;
+        
+        array = array.subarray(i + 4);
+        array = this._setResponseLength(array);
+        
+        return array;
+    };
+    
+    /**
+     * Read response suspected length depending on response headers.
+     * For Transfer-Encoding: chunked, each chunk has number of length in first line of the message.
+     * If Content-Length header is present the response is in one chunk and this will be while message.
+     * 
+     * @param {Uint8Array} array Response payload.
+     * @returns {Uint8Array}
+     */
+    ChromeTcpConnection.prototype._setResponseLength = function(array){
+        var tr = this.response.data.getResponseHeader('Transfer-Encoding');
+        if (tr && tr === 'chunked') {
+            this.connection.chunked = true;
+            //read array until next CR. Evertything earlier is a chunk size (hex).
+            array = this._readChunkSize(array);
+        } else {
+            var cs = this.response.data.getResponseHeader('Content-Length');
+            if(cs){
+                this.response.suspectedLength = parseInt(cs);
+            }
+        }
+        return array;
+    };
+    
+    
+    /**
+     * 
+     * @param {Uint8Array} array
+     * @returns {undefined}
+     */
+    ChromeTcpConnection.prototype._readPayloadData = function(array){
+        if(this.connection.aborted) return;
+        var shouldBe = this.response.suspectedLength - this.response.responseRead;
+        if (shouldBe < 1) {
+            return;
+        }
+        
+        if (shouldBe >= array.length) {
+            if (this.response.chunkPayload) {
+                this.response.chunkPayload.set(array, this.response.responseRead);
+            } else {
+                this.response.chunkPayload = array;
+            }
+            this.response.responseRead += array.length;
+        } else if (shouldBe < array.length) {
+            //somewhere here is the end of chunk, 
+            //new chunk length and another part of chunk
+            if (this.response.chunkPayload) {
+                this.response.chunkPayload.set(array.subarray(0, shouldBe), this.response.responseRead);
+            } else {
+                this.response.chunkPayload = array.subarray(0, shouldBe);
+            }
+
+            array = array.subarray(shouldBe + 2);
+            array = this._readChunkSize(array);
+            this.response.responseRead = 0;
+            this.response.payload[this.response.payload.length] = this.response.chunkPayload;
+            this.response.chunkPayload = new Uint8Array(this.response.suspectedLength);
+            this._readPayloadData(array);
+        }
+    };
+    /**
+     * If response transfer-encoding is 'chunked' read until next CR. Everything earlier is a chunk size.
+     * 
+     * @param {Uint8Array} array
+     * @returns {Uint8Array} Truncated response without chybk size line
+     */
+    ChromeTcpConnection.prototype._readChunkSize = function(array){
+        if(this.connection.aborted) return;
+        
+        var i = 0;
+        for (; i < array.length; ++i) {
+            if (array[i] === 13) {
+                if (array[i + 1] === 10) {
+                    break;
+                }
+            }
+        }
+        var sizeArray = array.subarray(0, i);
+        var sizeHex = this._arrayBufferToString(sizeArray);
+        this.response.suspectedLength = parseInt(sizeHex, 16);
+        return array.subarray(i + 2);
+    };
+    /**
+     * Read the response and return it as a string.
+     * 
+     * @returns {String|_L18.ChromeTcpConnection.prototype@call;_getChunkedMessageString}
+     */
+    ChromeTcpConnection.prototype._getMessageString = function(){
+        
+        var tr = this.response.data.getResponseHeader('Transfer-Encoding');
+        if (tr && tr === 'chunked') {
+            return this._getChunkedMessageString();
+        }
+        this.response.chunkPayload = this._checkCompression(this.response.chunkPayload);
+
+        return this._arrayBufferToString(this.response.chunkPayload);
+    };
+    
+    ChromeTcpConnection.prototype._getChunkedMessageString = function(){
+        
+        var bufferSize = 0;
+        for (var i = 0, parts = this.response.payload.length; i < parts; i++) {
+            bufferSize += this.response.payload[i].length;
+        }
+//        console.warn('this.response.payload.length',this.response.payload.length);
+        var buffer = new Uint8Array(bufferSize);
+        var written = 0;
+        while (this.response.payload.length > 0) {
+            var payload = this.response.payload.shift();
+            buffer.set(payload, written);
+            written += payload.length;
+            
+        }
+        if (written > 0) {
+            buffer = this._checkCompression(buffer);
+            return this._arrayBufferToString(buffer);
+        }
+        return '';
+    };
+    /**
+     * If response content-encoding is gzip or deflate it will replace this.response.chunkPayload Uint8Array from encoded data to decoded data.
+     * @param {Object} props
+     * @param {Uin8Array} data Data to check and decompress if needed
+     * @returns {Uin8Array} converted Uint8Array
+     */
+    ChromeTcpConnection.prototype._checkCompression = function(data){
+        var ce = this.response.data.getResponseHeader('Content-Encoding');
+        if (!ce){
+            console.info('Message is not compressed');
+            return data;
+        }
+        if (ce.indexOf('gzip') !== -1) {
+            console.info('Message is gzip compressed');
+            var inflate = new Zlib.Gunzip(data);
+            data = inflate.decompress();
+        } else if (ce.indexOf('deflate') !== -1) {
+            console.info('Message is gzip deflate compressed');
+            var inflate = new Zlib.Inflate(data);
+            data = inflate.decompress();
+        } else {
+            console.info('Unknown compress method');
+        }
+        return data;
+    };
+    
+    ChromeTcpConnection.prototype._setupTimeout = function(){
+        
+        if(this.connection.aborted) return;
+        if (this.request.timeout <= 0)
+            return;
+        var context = this;
+        this.connection.timeoutTimer = window.setTimeout(function(e){
+            context.connection.aborted = true;
+            context._close();
+            context.dispatchEvent('timeout', {
+                'code': 0,
+                'message': 'Timeout exceeded.'
+            });
+        }, this.request.timeout);
+    };
+    
+    ChromeTcpConnection.prototype._onResponseReady = function(){
+        if(this.connection.aborted) return;
+        if(this.connection.timeoutTimer){
+            window.clearTimeout(this.connection.timeoutTimer);
+            delete this.connection.timeoutTimer;
+        }
+        console.log(performance.now(), 'Response ready');
+        this.dispatchEvent('load', {
+            'request': this.request.data,
+            'response': this.response.data
+        });
+    };
+    
+    ChromeTcpConnection.prototype._close = function(){
+        chrome.sockets.tcp.disconnect(this.connection.socketId);
+        chrome.sockets.tcp.close(this.connection.socketId);
+        this.connection.readyState = 3;
+        
+        chrome.sockets.tcp.onReceive.removeListener(this._socketReceived.bind(this));
+        chrome.sockets.tcp.onReceiveError.removeListener(this._socketReceivedError.bind(this));
+        
+        if(this.connection.timeoutTimer){
+            window.clearTimeout(this.connection.timeoutTimer);
+            delete this.connection.timeoutTimer;
+        }
+    };
+    
     /**
      * 
      * @param {Object} info The event data.
@@ -365,9 +919,27 @@ angular.module('chrome.tcp', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._socketReceivedError = function(info){
-        console.error(performance.now(), 'Disconnected or end of message.',info.resultCode);
-        this._cleanUpResponse(info.socketId);
-        this._close(info.socketId);
+        console.error(performance.now(), 'Disconnected or end of message.',info.resultCode, info.socketId);
+        
+//        chrome.sockets.tcp.setPaused(this.connection.socketId, false);
+//        console.log(this.response.responseRead, this.response.suspectedLength);
+//        var responseStr = this._getMessageString();
+//        console.log('responseStr',responseStr);
+//        this.response.data.response = responseStr;
+//        this._onResponseReady();
+        if(this.connection.readyState === 3) return;
+        this._cleanUpResponse();
+        this._close();
+        
+    };
+    
+    ChromeTcpConnection.prototype._cleanUpResponse = function(){
+        delete this.response.chunkPayload;
+        delete this.response.hasHeaders;
+        delete this.response.suspectedLength;
+        delete this.response.responseRead;
+        delete this.response.payload;
+        delete this.response.message;
     };
     
     /**
@@ -392,6 +964,19 @@ angular.module('chrome.tcp', [])
             bufferView[i] = string.charCodeAt(i);
         }
         return buffer;
+    };
+    /**
+     * Convert ArrayBuffer to readable form
+     * @param {ArrayBuffer} buff
+     * @returns {String} Converted string
+     */
+    ChromeTcpConnection.prototype._arrayBufferToString = function(buff){
+        var array = new Uint8Array(buff);
+        var str = '';
+        for (var i = 0; i < array.length; ++i) {
+            str += String.fromCharCode(array[i]);
+        }
+        return str;
     };
     /**
      * Add |callback| as a listener for |type| events.
@@ -458,10 +1043,17 @@ angular.module('chrome.tcp', [])
         }
     };
     
-    var instance = new ChromeTcpConnection();
     
     var service = {
-        'create': instance.createConnection
+        'create': function(props){
+            var instance = new ChromeTcpConnection(props);
+            
+            return {
+                'send': instance.send.bind(instance),
+                'addEventListener': instance.addEventListener.bind(instance),
+                'removeEventListener': instance.removeEventListener.bind(instance)
+            };
+        }
     };
     return service;
 }]);
