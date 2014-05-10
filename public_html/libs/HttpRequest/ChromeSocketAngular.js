@@ -76,7 +76,7 @@ angular.module('chrome.http', [])
      *  Optional (String) 'body' - Request payload. Should not be set if request does not allow to carry a payload. TODO: allow file upload. Default null.
      *  Optional (int) 'timeout' - Request timeout. After this time request will be aborted and timeout and abort event fired. Default 0 - no timeout.
      *  Optional (bool) 'fallowredirects' - If false the request will fire load event when firest redirect occure. Default true.
-     *  Optional (bool) 'debud' - Enable debug messages in console output. Default false. TODO: not yet implemented.
+     *  Optional (bool) 'debug' - Enable debug messages in console output. Default false. 
      *  Optional (Object) 'on' - event listeners for the request:
      *      (Function) 'load' - fired on request end
      *      (Function) 'error' - fired on request error
@@ -125,7 +125,8 @@ angular.module('chrome.http', [])
             'timeout': 0,
             'fallowredirects': true,
             'on': {}, //on.load.addEventListener, on.error, on.progress, on.start, on.uploadstart, on.upload, on.timeout, on.abort
-            'debug': false
+            'debug': false,
+            'redirect': []
         };
         
         var uri = new URI(options.url);
@@ -160,6 +161,7 @@ angular.module('chrome.http', [])
         }
         
         this.debug = options.debug;
+        this.redirect = options.redirect;
         
         /**
          * Connection properties
@@ -218,16 +220,24 @@ angular.module('chrome.http', [])
              * HTTP request data
              */
             data: {
-            'url': options.url,
-                    'method': options.method,
-                    'headers': options.headers,
-                    'payload': options.payload
+                'url': options.url,
+                'method': options.method,
+                'headers': options.headers,
+                'payload': options.payload,
+                'httpmessage': ''
             },
             /**
              * Message that will be send to the server
              */
             'message': '',
-            'timeout': options.timeout
+            /**
+             * Request timeout.
+             */
+            'timeout': options.timeout,
+            /**
+             * If the service should follow redirects.
+             */
+            'fallowredirects': options.fallowredirects
         };
         /**
          * Response properties
@@ -289,7 +299,8 @@ angular.module('chrome.http', [])
         
         angular.forEach(options.on, function(fn,type){
             if(typeof fn !== 'function'){
-                console.warn('fn is not a function', fn)
+                if(options.debug)
+                    console.warn('fn is not a function', fn);
                 return;
             }
             this.addEventListener(type, fn);
@@ -309,33 +320,39 @@ angular.module('chrome.http', [])
         
         this._connect(this.request.uri.host, this.request.uri.port)
             .then(function(socketId){
-                console.log('Connected to socked for host: ', context.request.uri.host, ' and port ', context.request.uri.port);
+                if(context.debug){
+                    console.log('Connected to socked for host: ', context.request.uri.host, ' and port ', context.request.uri.port);
+                }
                 context.connection.readyState = 1;
                 context.connection.connected = true;
                 context.connection.socketId = socketId;
                 defered.resolve();
             })
             .catch(function(reason){
-                context.error('Can\'t create socket. Error code: ', reason);
+                if(context.debug){
+                    context.error('Can\'t create socket. Error code: ', reason);
+                }
                 defered.reject({
                     'code': reason,
                     'message': 'Connection refused.'
                 });
             });
-        
-        
         return defered.promise;
     };
     
     ChromeTcpConnection.prototype._connect = function(host, port){
         var defered = $q.defer();
-        
+        var context = this;
         chrome.sockets.tcp.create({}, function(createInfo){
             var socketId = createInfo.socketId;
-            console.info('Created socket with socketId: ',socketId);
-            console.info('Connecting to host : ', host, 'on port: ', port);
+            if(context.debug){
+                console.info('Created socket with socketId: ',socketId);
+                console.info('Connecting to host : ', host, 'on port: ', port);
+            }
             chrome.sockets.tcp.connect(socketId, host, port, function(result){
-                console.info('Connected to host : ', host, 'on port: ', port, 'using socket: ', socketId);
+                if(context.debug){
+                    console.info('Connected to host : ', host, 'on port: ', port, 'using socket: ', socketId);
+                }
                 if (result >= 0) {
                     defered.resolve(socketId);
                 } else {
@@ -359,45 +376,6 @@ angular.module('chrome.http', [])
             })
             .catch(defered.reject);
         return defered.promise;
-
-//        var context = this;
-//        this._prepageMessageBody().then(function(){
-//            
-//            var buffer = new ArrayBuffer(context.request.message.length);
-//            var bufferView = new Uint8Array(buffer);
-//            for (var i = 0; i < context.request.message.length; i++) {
-//                bufferView[i] = context.request.message.charCodeAt(i);
-//            }
-//            
-//            chrome.sockets.tcp.create({}, function(info) {
-//                var socketId = info.socketId;
-//                
-//                context.connection.readyState = 1;
-//                context.connection.connected = true;
-//                context.connection.socketId = socketId;
-//                
-//                chrome.sockets.tcp.connect(socketId, context.request.uri.host, context.request.uri.port, function(result){ 
-//                    if(result < 0) {
-//                        console.error('Error in connection'); 
-//                        return;
-//                    };
-//                    
-//                    
-//                    chrome.sockets.tcp.send(socketId, buffer, function(result){
-//                        if(result.resultCode < 0) {
-//                            console.error('Error in connection'); 
-//                            return;
-//                        };
-//                    });
-//                    
-//                    
-//                });
-//                
-//            });
-//            
-//            
-//        });
-
     };
     
     ChromeTcpConnection.prototype._makeRequest = function(){
@@ -413,11 +391,13 @@ angular.module('chrome.http', [])
             });
             throw 'Trying to make a request on inactive socket'; 
         }
-        
+        var context = this;
         this._prepageMessageBody()
         .then(this._writeMessage.bind(this))
         .then(function(written){
-            console.info('HTTP message send: (bytes) ', written);
+            if(context.debug){
+                console.info('HTTP message send: (bytes) ', written);
+            }
             defered.resolve(null);
         });
         return defered.promise;
@@ -453,9 +433,10 @@ angular.module('chrome.http', [])
             message += this.request.data.body;
         }
         message += this.CR;
-        console.info('Created message body: ', message);
-        
-        this.request.message = message;
+        if(this.debug){
+            console.info('Created message body: ', message);
+        }
+        this.request.data.httpmessage = message;
         defered.resolve();
         return defered.promise;
     };
@@ -467,12 +448,16 @@ angular.module('chrome.http', [])
         }
         this.dispatchEvent('uploadstart', {});
         this.connection.readyState = 2;
-        if (!(this.request.message instanceof ArrayBuffer)) {
-            this.request.message = this._stringToArrayBuffer(this.request.message);
+        if (!(this.request.data.httpmessage instanceof ArrayBuffer)) {
+            this.request.message = this._stringToArrayBuffer(this.request.data.httpmessage);
+        } else {
+            this.request.message = this.request.data.httpmessage;
         }
         var context = this;
         chrome.sockets.tcp.send(this.connection.socketId, this.request.message, function(sendInfo) {
-            console.info('Sent message to peer using socket #', context.connection.socketId, ', payload: ', context.request.message, ' with result: ', sendInfo);
+            if(context.debug){
+                console.info('Sent message to peer using socket #', context.connection.socketId, ', payload: ', context.request.message, ' with result: ', sendInfo);
+            }
             context.dispatchEvent('upload', {});
             if (sendInfo.resultCode < 0) {
                 defered.reject({
@@ -491,13 +476,9 @@ angular.module('chrome.http', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._registerSocketCallbacks = function(){
-        /**
-         * TODO: clean listeners on close.!!!! or it will cause a memory leak because current object still will be alive.
-         */
+        
         chrome.sockets.tcp.onReceive.addListener(this._socketReceived.bind(this));
-        /*
-         * Event raised when a network error occured while the runtime was waiting for data on the socket address and port. Once this event is raised, the socket is set to paused and no more onReceive events are raised for this socket.
-         */
+        
         chrome.sockets.tcp.onReceiveError.addListener(this._socketReceivedError.bind(this));
     };
     /**
@@ -510,14 +491,17 @@ angular.module('chrome.http', [])
     ChromeTcpConnection.prototype._socketReceived = function(info){
         
         if(this.connection.socketId !== info.socketId){
-            console.warn('Has different socket response than suposed.');
+            if(this.debug){
+                console.warn('Has different socket response than suposed.');
+            }
             return;
         }
         
         if(info.data){
-//            console.info(performance.now(), 'Read socket data.');
-//            console.info(performance.now(), 'Has part of the message');
-            //@TODO: move this event into place where read count is ready.
+            if(this.debug){
+                console.info(performance.now(), 'Has part of the message');
+            }
+            //@TODO: move this event into place where read size can be read and fire event with numeric values like: current and total.
             this.dispatchEvent('progress', {});
             //chrome.sockets.tcp.setPaused(this.connection.socketId, true);
             this._handleMessage(info.data);
@@ -539,18 +523,7 @@ angular.module('chrome.http', [])
         if(this.connection.aborted) return;
         var array = new Uint8Array(response);
         
-        
-//        var str = '';
-//        for (var i = 0; i < array.length; ++i) {
-//            str += String.fromCharCode(array[i]);
-//        }
-//        console.group('Part of message');
-//        console.log(str);
-//        console.groupEnd();
-        
-        
         if (!this.response.hasHeaders) {
-            console.info('!!!! DO NOT HAVE A HEADERS !!!!');
             if(this.response.tmpResponse !== null){
                 var newLength = this.response.tmpResponse.length + array.length;
                 var newArray = new Uint8Array(newLength);
@@ -564,8 +537,14 @@ angular.module('chrome.http', [])
             
             if(this.connection.error){
                 this.connection.aborted = true;
-                console.log('Connection error', this);
-                // TODO: error report.
+                if(this.debug){
+                    console.error('Connection error', this);
+                }
+                this.dispatchEvent('error', {
+                    'code': 0,
+                    'message': this.connection.message
+                });
+                
                 return;
             }
             
@@ -577,21 +556,9 @@ angular.module('chrome.http', [])
                     this.response.tmpResponse.set(array);
                 }
                 return;
-            } else {
-                console.log('Response headers ready', this.response.data.headers);
             }
             this.response.chunkPayload = new Uint8Array(this.response.suspectedLength);
         }
-        
-        
-        
-//        if(this.response.suspectedLength === -1){
-//            this.dispatchEvent('error', {
-//                'code': 0,
-//                'message': 'The response is incomplete. It does not contain any information about it\'s size.'
-//            });
-//            return;
-//        }
         
         try {
             this._readPayloadData(array);
@@ -605,9 +572,7 @@ angular.module('chrome.http', [])
 
         if (this.response.responseRead === this.response.suspectedLength) {
             var responseStr = this._getMessageString();
-//            console.log('responseStr',responseStr);
             this.response.data.response = responseStr;
-//            this.response.data.response = this._getMessageString();
             this._close();
             this._cleanUpResponse();
             this._onResponseReady();
@@ -655,7 +620,9 @@ angular.module('chrome.http', [])
         // Wait until next part arrive.
         //
         if(!foundDelim){
-            console.log('Not found delimiter');
+            if(this.debug){
+                console.log('Not delimiter found');
+            }
             return array;
         }
         
@@ -670,29 +637,36 @@ angular.module('chrome.http', [])
         // truncate array from start to the delimiter (CRCR) place.
         var headersArray = array.subarray(0, i);
         var headersMessage = this._arrayBufferToString(headersArray);
-        console.info('Response message: ', headersMessage);
+        if(this.debug){
+            console.info('Response message: ', headersMessage);
+        }
         var splitted = headersMessage.split('\n');
         
         //
         // A first line is the status. Rest of it are headers.
         //
         var status_line = splitted.shift();
-        console.info('Response\'s first line: ', status_line);
+        if(this.debug){
+            console.info('Response\'s first line: ', status_line);
+        }
         statusLine = status_line.replace(/HTTP\/\d(\.\d)?\s/, '');
         status = statusLine.substr(0, statusLine.indexOf(' '));
         
         try {
             status = parseInt(status);
         } catch (e) {
-            console.error('Status line is not valid: ', status_line);
+            if(this.debug){
+                console.error('Status line is not valid: ', status_line);
+            }
             this.connection.error = true;
             this.connection.message = "Response doeas not contain status message.";
             return null;
         }
         
         statusMessage = statusLine.substr(statusLine.indexOf(' ') + 1);
-        
-        console.info('Response status: ', status, statusMessage, statusLine);
+        if(this.debug){
+            console.info('Response status: ', status, statusMessage, statusLine);
+        }
         
         ///
         /// Read a response headers
@@ -707,7 +681,9 @@ angular.module('chrome.http', [])
             };
             headers[headers.length] = o;
         }
-        console.info('Response headers: ', headers);
+        if(this.debug){
+            console.info('Response headers: ', headers);
+        }
         this.response.hasHeaders = true;
         /// 
         /// Create a response object 
@@ -827,7 +803,6 @@ angular.module('chrome.http', [])
         for (var i = 0, parts = this.response.payload.length; i < parts; i++) {
             bufferSize += this.response.payload[i].length;
         }
-//        console.warn('this.response.payload.length',this.response.payload.length);
         var buffer = new Uint8Array(bufferSize);
         var written = 0;
         while (this.response.payload.length > 0) {
@@ -851,19 +826,27 @@ angular.module('chrome.http', [])
     ChromeTcpConnection.prototype._checkCompression = function(data){
         var ce = this.response.data.getResponseHeader('Content-Encoding');
         if (!ce){
-            console.info('Message is not compressed');
+            if(this.debug){
+                console.info('Message is not compressed');
+            }
             return data;
         }
         if (ce.indexOf('gzip') !== -1) {
-            console.info('Message is gzip compressed');
+            if(this.debug){
+                console.info('Message is gzip compressed');
+            }
             var inflate = new Zlib.Gunzip(data);
             data = inflate.decompress();
         } else if (ce.indexOf('deflate') !== -1) {
-            console.info('Message is gzip deflate compressed');
+            if(this.debug){
+                console.info('Message is gzip deflate compressed');
+            }
             var inflate = new Zlib.Inflate(data);
             data = inflate.decompress();
         } else {
-            console.info('Unknown compress method');
+            if(this.debug){
+                console.info('Unknown compress method');
+            }
         }
         return data;
     };
@@ -890,7 +873,9 @@ angular.module('chrome.http', [])
             window.clearTimeout(this.connection.timeoutTimer);
             delete this.connection.timeoutTimer;
         }
-        console.log(performance.now(), 'Response ready');
+        if(this.debug){
+            console.log(performance.now(), 'Response ready');
+        }
         this.dispatchEvent('load', {
             'request': this.request.data,
             'response': this.response.data
@@ -919,15 +904,10 @@ angular.module('chrome.http', [])
      * @returns {undefined}
      */
     ChromeTcpConnection.prototype._socketReceivedError = function(info){
-        console.error(performance.now(), 'Disconnected or end of message.',info.resultCode, info.socketId);
-        
-//        chrome.sockets.tcp.setPaused(this.connection.socketId, false);
-//        console.log(this.response.responseRead, this.response.suspectedLength);
-//        var responseStr = this._getMessageString();
-//        console.log('responseStr',responseStr);
-//        this.response.data.response = responseStr;
-//        this._onResponseReady();
         if(this.connection.readyState === 3) return;
+        if(this.debug){
+            console.error(performance.now(), 'Disconnected or end of message.',info.resultCode, info.socketId);
+        }
         this._cleanUpResponse();
         this._close();
         
@@ -987,7 +967,7 @@ angular.module('chrome.http', [])
      *     which will prevent delivery to the rest of the listeners.
      */
     ChromeTcpConnection.prototype.addEventListener = function(type, callback){
-        this._assertEventType(type);
+        this.assertEventType(type);
         
         if (!this.listeners_[type])
             this.listeners_[type] = [];
@@ -1002,7 +982,7 @@ angular.module('chrome.http', [])
      *     |type|.
      */
     ChromeTcpConnection.prototype.removeEventListener = function(type, callback) {
-        this._assertEventType(type);
+        this.assertEventType(type);
         if (!this.listeners_[type])
             return;
         for (var i = this.listeners_[type].length - 1; i >= 0; i--) {
@@ -1020,7 +1000,7 @@ angular.module('chrome.http', [])
      * @return {boolean} Returns true if the event was handled.
      */
     ChromeTcpConnection.prototype.dispatchEvent = function(type, var_args) {
-        this._assertEventType(type);
+        this.assertEventType(type);
         if (!this.listeners_[type])
             return false;
         for (var i = 0; i < this.listeners_[type].length; i++) {
@@ -1037,22 +1017,143 @@ angular.module('chrome.http', [])
      * @param {String} type Event type. eg.: load, error, progress etc
      * @returns {undefined}
      */
-    ChromeTcpConnection.prototype._assertEventType = function(type) {
+    ChromeTcpConnection.prototype.assertEventType = function(type) {
         if(['load','error','progress','start','uploadstart','upload','timeout','abort'].indexOf(type) === -1){
             throw "Unknown event type: "+type;
         }
     };
     
     
+    
+    
+    function HttpRequest(opts){
+        this.listeners_ = {};
+        if (opts && opts.load) {
+            this.addEventListener('load', opts.load);
+            delete opts.load;
+        }
+        if (opts && opts.error) {
+            this.addEventListener('error', opts.error);
+            delete opts.error;
+        }
+        this.request = new ChromeTcpConnection(opts);
+        this.orygopts = opts;
+        this.started = false;
+        this.redirect = [];
+        this.aborted = false;
+        this._setUpListners();
+    }
+    HttpRequest.prototype.addEventListener = function(type, callback){
+        if (!this.listeners_[type])
+            this.listeners_[type] = [];
+        this.listeners_[type].push(callback);
+        return this;
+    };
+    HttpRequest.prototype.removeEventListener = function(type, callback) {
+        if (!this.listeners_[type])
+            return;
+        for (var i = this.listeners_[type].length - 1; i >= 0; i--) {
+            if (this.listeners_[type][i] === callback) {
+                this.listeners_[type].splice(i, 1);
+            }
+        }
+    };
+    HttpRequest.prototype.dispatchEvent = function(type, var_args) {
+        if (!this.listeners_[type])
+            return false;
+        for (var i = 0; i < this.listeners_[type].length; i++) {
+            if (this.listeners_[type][i].apply(
+                    /* this */ null,
+                    /* var_args */ Array.prototype.slice.call(arguments, 1))) {
+                return true;
+            }
+        }
+    };
+    HttpRequest.prototype._setUpListners = function(){
+        if(this.aborted) return;
+        this.request.addEventListener('start', this._start.bind(this));
+        this.request.addEventListener('uploadstart', this._uploadstart.bind(this));
+        this.request.addEventListener('upload', this._upload.bind(this));
+        this.request.addEventListener('progress', this._progress.bind(this));
+        this.request.addEventListener('load', this._load.bind(this));
+        this.request.addEventListener('error', this._error.bind(this));
+        this.request.addEventListener('timeout', this._timeout.bind(this));
+    };
+    HttpRequest.prototype.send = function() {
+        if(this.aborted) return;
+        this.request.send();
+    };
+    HttpRequest.prototype.abort = function() {
+        if(this.aborted) return;
+        this.aborted = true;
+        this.request.abort();
+        this.dispatchEvent('abort');
+    };
+    HttpRequest.prototype._start = function() {
+        if(this.aborted) return;
+        if(this.started) return;
+        this.started = true;
+        this.dispatchEvent('start', arguments);
+    };
+    HttpRequest.prototype._uploadstart = function() {
+        if(this.aborted) return;
+        this.dispatchEvent('uploadstart', arguments);
+    };
+    HttpRequest.prototype._upload = function() {
+        if(this.aborted) return;
+        this.dispatchEvent('upload', arguments);
+    };
+    HttpRequest.prototype._progress = function() {
+        if(this.aborted) return;
+        this.dispatchEvent('progress', arguments);
+    };
+    HttpRequest.prototype._error = function() {
+        if(this.aborted) return;
+        this.dispatchEvent('error', arguments);
+    };
+    HttpRequest.prototype._timeout = function() {
+        if(this.aborted) return;
+        this.aborted = true;
+        this.dispatchEvent('timeout', arguments);
+    };
+    HttpRequest.prototype._load = function() {
+        if(this.aborted) return;
+        var response = this.request.response.data;
+        
+        function finish(){
+            var result = {
+                'redirects': this.redirect,
+                'request': this.request.request.data,
+                'response': this.request.response.data
+            };
+            this.dispatchEvent('load', result);
+        }
+        
+        //check redirect
+        if (response.status > 300 && response.status <= 307 && this.request.request.fallowredirects) {
+            var location = response.getResponseHeader('Location');
+            if (!location) {
+                finish.call(this);
+                return;
+            }
+            delete response['response'];
+            this.redirect[this.redirect.length] = response;
+            var opt = angular.extend({}, this.orygopts);
+            opt.url = location;
+            this.request = new ChromeTcpConnection(opt);
+            this._setUpListners();
+            this.send();
+        } else {
+            delete this.started;
+            finish.call(this);
+        }
+    };
+    
+    
+    
     var service = {
         'create': function(props){
-            var instance = new ChromeTcpConnection(props);
-            
-            return {
-                'send': instance.send.bind(instance),
-                'addEventListener': instance.addEventListener.bind(instance),
-                'removeEventListener': instance.removeEventListener.bind(instance)
-            };
+            return new HttpRequest(props);
         }
     };
     return service;
