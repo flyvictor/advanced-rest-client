@@ -9,6 +9,7 @@ String.prototype.isEmpty = function() {
 var RestClient = angular.module('RestClient', [
   'ngRoute',
   'ngAnimate',
+  'ngSanitize',
   'arc.filters',
   'arc.services',
   'arc.directives',

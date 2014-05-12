@@ -20,3 +20,13 @@ ArcFilters.filter('filesize', [function() {
             }
         };
     }]);
+ArcFilters.filter('locationheader', [function() {
+        return function(headers) {
+            for(var i=0, len=headers.length;i<len;i++){
+                if(headers[i].name.toLowerCase() === 'location'){
+                    return headers[i].value;
+                }
+            }
+            return '[unknown]';
+        };
+    }]);

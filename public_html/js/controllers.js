@@ -141,6 +141,172 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
         }
         return result;
     };
+    
+    $scope.urlKeydown = function(e){
+        if(e && e.keyCode && e.keyCode === 13){
+            $scope.runRequest();
+        }
+    };
+    
+}]);
+
+ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EVENTS', 'CodeMirror','$timeout', 'ViewWorkersService', '$sce', function($scope, $rootScope, APP_EVENTS, CodeMirror, $timeout, ViewWorkersService, $sce){
+    
+    $scope.$on(APP_EVENTS.END_REQUEST, function(e,response){
+        $scope.$apply(function(){
+            ct = null;
+            cmHighlight = false;
+            $scope.data = response;
+            $timeout(parsedHightlight,0);
+            console.log($scope.data);
+        });
+        
+    });
+    
+    $scope.data = null;
+    var ct = null;
+    var cmHighlight = false;
+    
+    var parsedHightlight = function(){
+        if(cmHighlight) return;
+        var ct = getContentType();
+        var mode = ct.split(';').shift();
+        
+        var elements = [];
+        function clb(a, b){
+            elements[elements.length] = {'string': a, 'style': b};
+        }
+        function ready(){
+            var data = {
+                'elements': elements,
+                'url': $scope.data.destination
+            };
+            ViewWorkersService.html(data)
+            .then(function(html){
+                $scope.data.parsedResponse = $sce.trustAsHtml(html);
+                initializePopovers();
+            })
+            .catch(function(reason){}); //TODO: error handling.
+        }
+        
+        try {
+            //this is altered version of RunMode for CM.
+            //It will not hang a browser in big amount of data and fire callback
+            //when it finish.
+            CodeMirror.highlight($scope.data.response.response, mode, clb, ready);
+        } catch (e) {
+            console.log("Unable to initialize CodeMirror :( ", e.message);
+        }
+    };
+    function getContentType(){
+        if(ct) return ct;
+        if(!$scope.data || $scope.data.response.headers.length === 0) return null;
+        for(var i=0,len=$scope.data.response.headers.length;i<len;i++){
+            if($scope.data.response.headers[i].name.toLowerCase() === 'content-type'){
+                ct = $scope.data.response.headers[i].value;
+                return ct;
+            }
+        }
+        return null;
+    }
+    
+    function initializePopovers(panel){
+        var popovers = document.querySelectorAll('*[data-image]', panel);
+        for(var i=0,len=popovers.length; i<len; i++){
+            var popover = popovers[i];
+            var content = '<div data-imgprevurl="' + popover.dataset['image'] + '" class="popover-image-prev">';
+            content += '<img src="img/mini-loader.gif" alt="loading" title="loading"/><br/><i>loading</i>';
+            content += '</div>';
+            
+            popover.dataset['html'] = 'true';
+            popover.dataset['placement'] = 'auto top';
+            popover.dataset['trigger'] = 'hover';
+            popover.dataset['content'] = content;
+            popover.dataset['container'] = 'body';
+            popover.dataset['animation'] = false;
+            // @TODO: initialize popovers.
+        }
+    }
+    
+    $scope.hasJson = function(){
+        var ct = getContentType();
+        if(!ct) return false;
+        return ct.indexOf('json') !== -1;
+    };
+    $scope.hasXml = function(){
+        var ct = getContentType();
+        if(!ct) return false;
+        return ct.indexOf('xml') !== -1;
+    };
+    $scope.showParsed = function(){
+        return !(!!$scope.hasJson() || !!$scope.hasXml());
+    };
+    $scope.xmlOpen = function(){
+        if(!!$scope.data.parsedXml) return;
+        
+        ViewWorkersService.xml($scope.data.response.response)
+        .then(function(html){
+            $scope.data.parsedXml = $sce.trustAsHtml(html);
+        })
+        .catch(function(reason){}); //TODO: error handling.
+    };
+    $scope.jsonOpen = function(){
+        if(!!$scope.data.parsedJson) return;
+        ViewWorkersService.json($scope.data.response.response)
+        .then(function(html){
+            $scope.data.parsedJson = $sce.trustAsHtml(html);
+        })
+        .catch(function(reason){
+            console.error(reason);
+        }); //TODO: error handling.
+    };
+    $scope.htmlControl = function(e){
+        if (!e.target)
+            return;
+        if (e.target.nodeName === "A") {
+            e.preventDefault();
+            var url = e.target.getAttribute('href');
+            console.warn('!!TODO. Insert into values service.', url);
+            $scope.values.url = url;
+            return;
+        }
+    };
+    $scope.jsonControl = function(e){
+        if (!e.target)
+            return;
+        if (e.target.nodeName === "A") {
+            e.preventDefault();
+            var url = e.target.getAttribute('href');
+            console.warn('!!TODO. Insert into values service.', url);
+            $scope.values.url = url;
+            return;
+        }
+        var toggleId = e.target.dataset['toggle'];
+        if (!toggleId)
+            return;
+        var parent = e.currentTarget.querySelector('div[data-element="' + toggleId + '"]');
+        if (!parent)
+            return;
+        var expanded = parent.dataset['expanded'];
+        if (!expanded || expanded === "true") {
+            parent.dataset['expanded'] = "false";
+        } else {
+            parent.dataset['expanded'] = "true";
+        }
+    };
+    $scope.xmlControl = function(e){
+        if (!e.target)
+            return;
+        if (!e.target.getAttribute("colapse-marker"))
+            return;
+        var parent = e.target.parentNode;
+        var expanded = parent.dataset['expanded'];
+        if (!expanded || expanded === "true") {
+                parent.dataset['expanded'] = "false";
+        } else {
+                parent.dataset['expanded'] = "true";
+        }
+    };
 }]);
 
 ArcControllers.controller('SocketController', ['$scope', function($scope){}]);

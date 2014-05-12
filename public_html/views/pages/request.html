@@ -14,7 +14,7 @@
                 </ul>
             </div>
             
-            <input type="url" class="form-control" id="requestUrl" placeholder="Enter request URL here" ng-model="values.url">
+            <input type="url" class="form-control" id="requestUrl" placeholder="Enter request URL here" ng-keydown="urlKeydown($event)" ng-model="values.url">
             
             <div class="input-group-btn">
                 <button type="button" class="btn btn-primary" tabindex="0" ng-click="runRequest()">Send</button>
@@ -81,6 +81,56 @@
     </div>
 </div>
 
+<div ng-controller="ResponseController">
+    <response-status status="{'code': data.response.status, 'message': data.response.statusText, 'time': data.response.responseTime}"></response-status>
+    
+    <section ng-if="data.redirects.length > 0" class="row form-group">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="cart-title">
+                    Redirects ({{data.redirects.length}})
+                </div>
+                <response-redirect ng-repeat="redirect in data.redirects" index="$index" redirect="redirect"></response-redirect>
+            </div>
+        </div>
+    </section>
+    
+    <response-headers ng-if="data.response.headers.length > 0" headers="data.response.headers"></response-headers>
+    
+    <div ng-if="!!data" class="row form-group">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="cart-title">
+                    Response body 
+                    <div class="btn-group title-dropdown">
+                        <button type="button" class="btn btn-default btn-sm">Save as file</button>
+                        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">
+                            <span class="caret"></span>
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="#">Open in new window</a></li>
+                            <li><a href="#">Copy to clipboard</a></li>
+                            <li><a href="#">Force open in JSON tab</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <tabset>
+                    <tab heading="Raw data">
+                        <pre id="parsedOutput" ng-bind-html="data.parsedResponse" class="cm-s-default select-text" ng-click="htmlControl($event)"></pre>
+                    </tab>
+                    <tab heading="JSON" ng-if="hasJson()" select="jsonOpen()">
+                        <div ng-bind-html="data.parsedJson" id="JSON-parser" class="select-text" ng-click="jsonControl($event)"></div>
+                    </tab>
+                    <tab heading="XML" ng-if="hasXml()" select="xmlOpen()">
+                        <div ng-bind-html="data.parsedXml" id="XML-parser" class="select-text" ng-click="xmlControl($event)"></div>
+                    </tab>
+                </tabset>
+            </div>
+        </div>
+    </div>
+    
+</div>
 
 <script type="text/ng-template" id="otherHttpMethodModal.html">
     <div class="modal-header">

@@ -1,0 +1,15 @@
+<div class="row">
+    <div class="col-md-1">
+        #{{index+1}}
+    </div>
+    <div class="col-md-11">
+        <div class="row">
+            <div class="col-12 redirect-location select-text">
+                To: {{redirect.headers|locationheader}} <span class="label label-info">{{redirect.status}} {{redirect.statusText}}</span> <span class="label label-default">{{redirect.responseTime}} ms</span>
+            </div>
+            <div class="col-12 select-text" ng-repeat="header in redirect.headers">
+                {{header.name}}: {{header.value}}
+            </div>
+        </div>
+    </div>
+</div>

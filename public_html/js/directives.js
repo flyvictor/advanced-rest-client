@@ -178,3 +178,33 @@ ArcDirectives.directive('fileDropzone', ['$timeout', function($timeout) {
     };
     return directive;
 }]);
+
+ArcDirectives.directive('responseStatus', [function() {
+    return {
+        restrict: 'E',
+        scope: {
+            'status': '=',
+            'remove': '&onRemove'
+        },
+        templateUrl: 'views/partials/response-status.html'
+    };
+}]);
+ArcDirectives.directive('responseRedirect', [function() {
+    return {
+        restrict: 'E',
+        scope: {
+            'redirect': '=',
+            'index': '='
+        },
+        templateUrl: 'views/partials/response-redirect.html'
+    };
+}]);
+ArcDirectives.directive('responseHeaders', [function() {
+    return {
+        restrict: 'E',
+        scope: {
+            'headers': '='
+        },
+        templateUrl: 'views/partials/response-headers.html'
+    };
+}]);

@@ -15,12 +15,18 @@ var AppServices = angular.module('arc.services', []);
 AppServices.factory('RequestValues', ['RequestParser',function(parser) {
     var service = {
         //current URL value
-        'url': 'http://www.kalicinscy.com', //https://www.google.com
+        'url': 'http://blog.gdgpoland.org/feeds/posts/default?alt=json', //'http://beerlovers.kalicinscy.com/pubs/getCities.json',//'http://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyD2OjJy2eMbxA1PVpW2AWstcQ2mAZkxpLQ&part=snippet,contentDetails,statistics,status',//'http://gdata.youtube.com/feeds/api/playlists/OU2XLYxmsIKNXidK5HZsHu9T7zs6nxwK/?v=2&alt=json&feature=plcp', //https://www.google.com
         //current HTTP method. GET by default.
         'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
         'headers': {
             'value': [
+//                {'name': 'X-Requested-With', 'value':'XMLHttpRequest'},
+//                {'name': 'Authorization', 'value':'Basic ZGV2OmRldg=='},
+//                {'name': 'User-Agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
+//                {'name': 'Content-Length', 'value':'102'},
+//                {'name': 'Content-Type', 'value':'application/x-www-form-urlencoded; charset=UTF-8'}
+                
                 //{'name':'Content-Type','value':'application/json'},
 //                {'name':'accept', 'value':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'},
 //                {'name':'accept-encoding', 'value':'gzip,deflate,sdch'},
@@ -33,7 +39,7 @@ AppServices.factory('RequestValues', ['RequestParser',function(parser) {
         },
         //payload is a string of data to send
         'payload': {
-            'value': null, //'{\n\t\'a\': \'b\'\n}'
+            'value': null //'latMin=47.100632784446866&latMax=53.01530298984368&lngMax=28.034705078124944&lngMin=11.489294921874944' //'{\n\t\'a\': \'b\'\n}'
         },
         //array of FileObjects
         'files': []
@@ -363,7 +369,10 @@ AppServices.factory('CodeMirror', ['RequestValues',function(RequestValues) {
             get payloadInst () {
                 return payloadCodeMirrorInstance;
             },
-            'updateMode': setPayloadEditorCurrentMode
+            'updateMode': setPayloadEditorCurrentMode,
+            'highlight': function(txt, mode, dest, ready){
+                CodeMirror.runMode(txt, mode, dest, ready);
+            }
         };
         
         return service;
@@ -373,7 +382,8 @@ AppServices.factory('CodeMirror', ['RequestValues',function(RequestValues) {
  * Service to handle operation on current Request object.
  * It is responsible for managing data synchronization between services and UI and for save/restore actions. 
  */
-AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesystem','DBService', '$rootScope', 'APP_EVENTS',function($q,RequestValues,DriveService,Filesystem,DBService,$rootScope, APP_EVENTS) {
+AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesystem','DBService', '$rootScope', 'APP_EVENTS',
+    function($q,RequestValues,DriveService,Filesystem,DBService,$rootScope, APP_EVENTS) {
         $rootScope.$on(APP_EVENTS.errorOccured, function(e, msg, reason){});
         /**
          * @ngdoc method
@@ -632,7 +642,9 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
         var query = $indexedDB.queryBuilder().$index('key').$lt(createKey(url,method)).$asc().compile();
         store.each(query).then(function(cursor){
             deferred.resolve(null);
-        }, function(reason){}, function(cursor){
+        }, function(reason){
+            
+        }, function(cursor){
             
         });
         return deferred.promise;
@@ -672,8 +684,11 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
         var deferred = $q.defer();
         
         function onRequestObjectReady(request){
-            request.addEventListener('load', function(e){ 
-                console.log('LOADED',e);
+            request.addEventListener('load', function(e){
+                
+//                console.log('LOADED',e);
+                $rootScope.$broadcast(APP_EVENTS.END_REQUEST, e);
+                
             }).addEventListener('error', function(e){ 
                 console.log('ERROR',e);
                 
@@ -727,7 +742,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             'url': requestObject.request.url,
             'method': requestObject.request.method,
             'timeout': 30000,
-            'debug': true
+            'debug': false
         };
         
         if(RequestValues.hasPayload() && requestObject.request.payload){
@@ -787,13 +802,46 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             }
         });
         
-        
-        
         return deferred.promise;
     }
     
     var service = {
        'run': runRequest 
+    };
+    return service;
+}]);
+
+AppServices.factory('ViewWorkersService', ['$q',function($q) {
+    
+    function parseView(script, data){
+        var deferred = $q.defer();
+        var worker = new Worker('js/workers/'+script+'.js');
+        worker.addEventListener('message', function(e) {
+            deferred.resolve(e.data);
+        }, false);
+        worker.addEventListener('error', function(e) {
+            deferred.reject(e);
+        }, false);
+        worker.postMessage(data);
+        return deferred.promise;
+    }
+    
+    function parseXmlView(data){
+        return parseView('xmlviewer', data);
+    }
+    
+    function parseHtmlView(data){
+        return parseView('htmlviewer', data);
+    }
+    
+    function parseJsonView(data){
+        return parseView('jsonviewer', data);
+    }
+    
+    var service = {
+        'xml': parseXmlView,
+        'html': parseHtmlView,
+        'json': parseJsonView
     };
     return service;
 }]);

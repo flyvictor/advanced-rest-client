@@ -1,0 +1,32 @@
+<section ng-if="!!status.code" class="row form-group">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="cart-title">
+                Status
+            </div>
+            <div class="">
+                <div class="pull-left">
+                    <h4 class="select-text">
+                        <span class="label label-success">{{status.code}} {{status.message}}</span>
+                        <span class="label label-default">{{status.time}} ms</span>
+                    </h4>
+                </div>
+                <div class="pull-right">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm">copy as HAR</button>
+                        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">
+                            <span class="caret"></span>
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu pull-right" role="menu">
+                            <li><a href="#">copy as CURL command</a></li>
+                            <li><a href="#">show recorded response</a></li>
+                        </ul>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+</section>
