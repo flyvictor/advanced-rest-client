@@ -208,3 +208,52 @@ ArcDirectives.directive('responseHeaders', [function() {
         templateUrl: 'views/partials/response-headers.html'
     };
 }]);
+
+ArcDirectives.directive("userProfile", ['$User','analytics','$modal',function($User,analytics,$modal) {
+    return {
+        restrict: 'A',
+        scope: {},
+        controller: function($scope) {
+            
+            var UserInfoModal = function ($scope, $modalInstance, user) {
+                $scope.user = user;
+                $scope.dismiss = function() {
+                    $modalInstance.dismiss('cancel');
+                };
+                $scope.logoff = function(){
+                    $modalInstance.close('logoff');
+                };
+            };
+            
+            
+            $scope.user = $User;
+            $scope.signIn = function(){
+               $User.authorize(true);
+               analytics.event('User','Sign in', 'Menu login');
+            };
+            $scope.signOut = function(){
+                $User.removeToken();
+                analytics.event('User','Sign out', 'Menu login');
+            };
+            $scope.openUserModal = function(){
+                var modalInstance = $modal.open({
+                    templateUrl: 'views/partials/user-info-modal.html',
+                    controller: UserInfoModal,
+                    resolve: {
+                        'user': function(){
+                            return $scope.user;
+                        }
+                    }
+                });
+                modalInstance.result.then(function(cmd) {
+                    switch(cmd){
+                        case 'logoff': $scope.signOut(); break;
+                    }
+                }, function() {
+                    
+                });
+            };
+        },
+        templateUrl: 'views/partials/userthumb.html'
+    };
+}]);

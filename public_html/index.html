@@ -26,6 +26,11 @@
                     <li role="presentation" ng-class="{'selected':isPathCurrent('/collections')}" ng-click="goto('/collections')">
                         <a href="#/collections">Collections</a>
                     </li>
+                    <li role="presentation" class="streach"></li>
+                    <li role="presentation" class="pull-down" ng-class="{'selected':isPathCurrent('/settings')}" ng-click="goto('/settings')">
+                        <a href="#/settings">Settings</a>
+                    </li>
+                    <li role="presentation" user-profile class="pull-down"></li>
                 </menu>
             </nav>
             <div class="container">
@@ -48,6 +53,7 @@
         <script src="libs/gzip/zlib_and_gzip.min.js"></script>
         <script src="libs/mousetrap/mousetrap.js"></script>
         <script src="libs/indexeddb.js"></script>
+        <script src="libs/chrome-platform-analytics/google-analytics-bundle.js"></script>
         
         <script src="libs/codemirror-3.19/lib/codemirror.js"></script>
         <script src="libs/codemirror-3.19/addon/hint/show-hint.js"></script>
@@ -76,5 +82,6 @@
         <script src="js/controllers.js"></script>
         <script src="js/filters.js"></script>
         <script src="js/directives.js"></script>
+        <script src="js/analytics.js"></script>
     </body>
 </html>

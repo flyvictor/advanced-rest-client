@@ -21,7 +21,8 @@ ArcControllers.controller('AppController', ['$scope','RequestValues','$location'
     
 }]);
 
-ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','RequestValues', function($scope,$modal,CodeMirror,RequestValues){
+ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','RequestValues','analytics', function($scope,$modal,CodeMirror,RequestValues,analytics){
+        analytics.view('Request');
     /**
      * Remove selected header from headers list.
      * @param {Object} header Map with "name" and "value" keys.
@@ -312,6 +313,25 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
 ArcControllers.controller('SocketController', ['$scope', function($scope){}]);
 ArcControllers.controller('HistoryController', ['$scope', function($scope){}]);
 ArcControllers.controller('CollectionsController', ['$scope', function($scope){}]);
+ArcControllers.controller('SettingsController', ['$scope','analytics','$timeout', function($scope,analytics,$timeout){
+    analytics.view('Settnigs');
+    
+    $scope.settings = {
+        analyticsEnabled: true
+    };
+    
+    analytics.isEnabled()
+    .then(function(enabled){
+        $scope.settings.analyticsEnabled = enabled;
+    });
+    
+    $scope.onAnalyticsChange = function(){
+        $timeout(function(){
+            analytics.setEnabled($scope.settings.analyticsEnabled);
+        },0);
+    };
+    $scope.analyticsEnabledText = function(){ return $scope.settings.analyticsEnabled === true ? 'Disable anaytics' : 'Enable analytics'; };
+}]);
 
 
 

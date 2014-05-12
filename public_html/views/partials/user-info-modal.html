@@ -1,0 +1,20 @@
+<div class="modal-header">
+    <h3 class="modal-title">{{user.user_info.name}}</h3>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-md-6">
+            <img ng-src="{{user.user_info.picture_object_url}}" alt="." class="img-thumbnail"/>
+        </div>
+        <div class="col-md-6">
+            <p class="bg-primary">You are now logged in to the app.</p>
+            <p>While you are logged in you can save your files on Google Drive&trade;</p>
+            
+            <button class="btn btn-default" ng-click="logoff()">Log off</button>
+        </div>
+    </div>
+    
+</div>
+<div class="modal-footer">
+    <button class="btn btn-primary" ng-click="dismiss()">Dismiss</button>
+</div>

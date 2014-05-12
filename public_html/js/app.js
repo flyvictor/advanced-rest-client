@@ -7,18 +7,19 @@ String.prototype.isEmpty = function() {
 /* App Module */
 
 var RestClient = angular.module('RestClient', [
-  'ngRoute',
-  'ngAnimate',
-  'ngSanitize',
-  'arc.filters',
-  'arc.services',
-  'arc.directives',
-  'arc.modules',
-  'arc.controllers',
-  'ui.bootstrap',
-  'ui.codemirror',
-  'xc.indexedDB',
-  'chrome.http'
+    'goog.analytics',
+    'ngRoute',
+    'ngAnimate',
+    'ngSanitize',
+    'arc.filters',
+    'arc.services',
+    'arc.directives',
+    'arc.modules',
+    'arc.controllers',
+    'ui.bootstrap',
+    'ui.codemirror',
+    'xc.indexedDB',
+    'chrome.http'
 ]);
 
 RestClient.value('version', '0.1');
@@ -37,6 +38,10 @@ RestClient.config(['$routeProvider',
       when('/request', {
         templateUrl: 'views/pages/request.html',
         controller: 'RequestController'
+      }).
+      when('/settings', {
+        templateUrl: 'views/pages/settings.html',
+        controller: 'SettingsController'
       }).
       otherwise({
         redirectTo: '/request'
@@ -67,4 +72,7 @@ RestClient.constant('APP_EVENTS', {
     START_REQUEST: 'app-request-start',
     END_REQUEST: 'app-request-end',
     REQUEST_ERROR: 'app-request-error'
+});
+RestClient.config(function(analyticsProvider){
+    analyticsProvider.setClientId('UA-18021184-9');
 });

@@ -90,7 +90,9 @@ html, body {
   background-color: #333333;
   position: fixed;
   width: 80px;
-  height: 100%; }
+  height: 100%;
+  display: flex;
+  flex-direction: column; }
 #appContainer #appNav menu li {
   height: 60px;
   align-items: flex-end;
@@ -105,6 +107,13 @@ html, body {
   background-color: #5A5A5A; }
 #appContainer #appNav menu li:hover {
   background-color: #3f3f3f; }
+#appContainer #appNav menu li.streach {
+  flex: 1 1 auto;
+  cursor: initial; }
+#appContainer #appNav menu li.streach:hover {
+  background-color: initial; }
+#appContainer #appNav menu li[user-profile] {
+  height: auto; }
 #appContainer .container {
   flex: 1; }
 #appContainer .btn {
@@ -386,5 +395,8 @@ div.file-drop #ArcHttpFilesInput {
   text-indent: 0px; }
 #JSON-parser .bodyPanel div[data-expanded="false"] div[collapse-indicator] {
   display: inline-block !important; }
+
+.user-widget .user-img {
+  width: 40px; }
 
 /*# sourceMappingURL=main.css.map */
