@@ -1,0 +1,8 @@
+<span class="suggestions-container">
+    <span ng-transclude></span>
+    <ul ng-if="suggestions.length !== 0" class="suggestions-display">
+        <li ng-click="makeSelection($index)" ng-repeat="suggestion in suggestions" class="suggestion-item" ng-class="{'selected': $index===selectedIndex}">
+            {{suggestion.display}}
+        </li>
+    </ul>
+</span>

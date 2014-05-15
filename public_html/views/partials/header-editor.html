@@ -1,5 +1,7 @@
 <div class="form-group headerRow">
-    <input class="form-control" type="text" name="headerName" ng-model="header.name">
-    <input class="form-control" type="text" name="headerValue" ng-model="header.value">
+    <span class="headerName input" input-suggestions query="query" suggestion="suggestion" default-suggestions="[]">
+        <input class="form-control" type="text" name="headerName" ng-model="header.name">
+    </span>
+    <input class="form-control" type="text" name="headerValue" ng-model="header.value" placeholder="{{valuePlaceholder}}">
     <button class="btn btn-default" type="button" name="headerRemove" title="Remove this header from editor" ng-click="remove()">remove</button>
 </div>

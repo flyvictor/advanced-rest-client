@@ -123,7 +123,7 @@ html, body {
   display: flex; }
 .headerRow.form-group {
   margin-bottom: 0px; }
-.headerRow input[name="headerName"] {
+.headerRow .input.headerName {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
   width: 35%;
@@ -398,5 +398,35 @@ div.file-drop #ArcHttpFilesInput {
 
 .user-widget .user-img {
   width: 40px; }
+
+p.bg-info, p.bg-danger, p.bg-primary, p.bg-success, p.bg-warning {
+  padding: 7px 10px; }
+
+.suggestions-container {
+  position: relative;
+  display: block; }
+.suggestions-container .suggestions-display {
+  position: absolute;
+  z-index: 1;
+  background-color: #fff;
+  margin: 0;
+  padding: 5px;
+  list-style: none;
+  border: 1px #e5e5e5 solid;
+  white-space: nowrap;
+  top: 33px;
+  width: 100%;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 3px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.25);
+  max-height: 250px;
+  overflow-y: auto; }
+.suggestions-container .suggestions-display .suggestion-item:hover, .suggestions-container .suggestions-display .suggestion-item.selected {
+  background-color: #e7ecf3; }
+.suggestions-container .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0; }
 
 /*# sourceMappingURL=main.css.map */

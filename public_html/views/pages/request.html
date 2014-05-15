@@ -46,7 +46,7 @@
                     <textarea ui-codemirror="headersEditor.options" ng-model="headersEditor.value"></textarea>
                 </tab>
                 <tab heading="Headers form">
-                    <http-header-editor hiddable ng-repeat="header in values.headers.value" header="header" on-remove="removeHeader(header)"></http-header-editor>
+                    <http-header-editor hiddable ng-repeat="header in values.headers.value" header="header" on-remove="removeHeader(header)" suggestion="onNameSugestion"></http-header-editor>
                     <div class="row form-action-bottom">
                         <div class="col-md-12">
                             <button class="btn btn-default btn-sm" type="button" title="Add new header" ng-click="addHeader()">add header</button>

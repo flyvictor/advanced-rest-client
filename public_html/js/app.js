@@ -11,6 +11,7 @@ var RestClient = angular.module('RestClient', [
     'ngRoute',
     'ngAnimate',
     'ngSanitize',
+    'ngTouch',
     'arc.filters',
     'arc.services',
     'arc.directives',

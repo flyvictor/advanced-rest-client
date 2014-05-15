@@ -49,13 +49,16 @@ angular.module('goog.analytics', []).provider('analytics', function() {
         };
 
         var setEnabled = function(enabled){
+            var defered = $q.defer();
             ///http://googlechrome.github.io/chrome-platform-analytics/interface_analytics_Config.html
             service.getConfig().addCallback(function(config) {
                 config.setTrackingPermitted(enabled);
                 // If "enabled" is false the library will automatically stop
                 // sending information to Google Analytics and will persist this
                 // behavior automatically.
+                defered.resolve();
             });
+            return defered.promise;
         };
 
         var isEnabled = function(){

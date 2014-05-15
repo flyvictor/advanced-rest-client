@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 -->
-<div class="row form-group request-form">
+<div class="row form-group">
     <div class="col-md-12">
         <section class="card">
             <div class="cart-title">
@@ -27,6 +27,38 @@ limitations under the License.
                 <button type="button" ng-class="{'btn-primary': settings.analyticsEnabled, 'btn-default': !settings.analyticsEnabled}" class="btn " ng-click="onAnalyticsChange()" ng-model="settings.analyticsEnabled" btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false">
                     {{analyticsEnabledText()}}
                 </button>
+            </div>
+        </section>
+    </div>
+</div>
+<div class="row form-group">
+    <div class="col-md-12">
+        <section class="card">
+            <div class="cart-title">
+                History synchronization
+            </div>
+            <div class="card-content">
+                <p>The app will synchronize your Requests history between your computers. This data are only avaliable for you.</p>
+                <p class="bg-info">You need to be logged in to your Google Account in order to this feature work.</p>
+                
+                <button type="button" ng-class="{'btn-primary': settings.syncEnabled, 'btn-default': !settings.syncEnabled}" class="btn " ng-click="onSynchOptionChange()" ng-model="settings.syncEnabled" btn-checkbox btn-checkbox-true="true" btn-checkbox-false="false">
+                    {{syncEnabledText()}}
+                </button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="row form-group">
+    <div class="col-md-12">
+        <section class="card">
+            <div class="cart-title">
+                Clear history
+            </div>
+            <div class="card-content">
+                <p>Remove history data. Note that it will be removed from all your devices.</p>
+                
+                <button type="button" class="btn btn-danger">Clear history</button>
             </div>
         </section>
     </div>

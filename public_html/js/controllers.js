@@ -29,6 +29,7 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
      * @returns {undefined}
      */
     $scope.removeHeader = function(header){
+        console.log('removeHeader',header);
         $scope.values.headers.value = $scope.values.headers.value.filter(function(element){
             return element !== header;
         });
@@ -39,6 +40,10 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
      */
     $scope.addHeader = function(){
         $scope.values.headers.value.push({'name':'','value':''});
+    };
+    
+    $scope.onNameSugestion = function(suggestion){
+        console.log('onNameSugestion', suggestion);
     };
     
     /**
@@ -317,7 +322,8 @@ ArcControllers.controller('SettingsController', ['$scope','analytics','$timeout'
     analytics.view('Settnigs');
     
     $scope.settings = {
-        analyticsEnabled: true
+        analyticsEnabled: true,
+        syncEnabled: true
     };
     
     analytics.isEnabled()
@@ -327,10 +333,20 @@ ArcControllers.controller('SettingsController', ['$scope','analytics','$timeout'
     
     $scope.onAnalyticsChange = function(){
         $timeout(function(){
-            analytics.setEnabled($scope.settings.analyticsEnabled);
+            
+            analytics.setEnabled($scope.settings.analyticsEnabled)
+            .then(function(){
+                analytics.event('Settings', $scope.settings.analyticsEnabled ? 'Enabled' : 'Disabled', 'Analytics');
+            });
         },0);
     };
-    $scope.analyticsEnabledText = function(){ return $scope.settings.analyticsEnabled === true ? 'Disable anaytics' : 'Enable analytics'; };
+    $scope.onSynchOptionChange = function(){
+        $timeout(function(){
+            analytics.event('Settings', $scope.settings.syncEnabled ? 'Enabled' : 'Disabled', 'Sync');
+        }, 0);
+    };
+    $scope.analyticsEnabledText = function(){ return $scope.settings.analyticsEnabled === true ? 'Reporting is enabled' : 'Reporting is disabled'; };
+    $scope.syncEnabledText = function(){ return $scope.settings.syncEnabled === true ? 'Sync is enabled' : 'Sync is disabled'; };
 }]);
 
 

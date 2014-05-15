@@ -1014,3 +1014,41 @@ AppServices.factory('$User', ['$q','$timeout','$http','$rootScope', function($q,
     
     return service;
 }]);
+
+/**
+ * A service responsible for getting definitions data like status codes or headers.
+ */
+AppServices.factory('Definitions', ['$q','$http', function($q, $http) {
+    /**
+     * @ngdoc method
+     * @name Definitions.get
+     * @function
+     * 
+     * @description Get app's definitions like HTTP status codes with explanations 
+     * or HTTP request/response headers definitions.
+     * @param {String} section it can be either: 'status', 'request-headers' or 'response-headers'
+     * @example 
+     *  Definitions.get('request-headers')
+     *  .then(function(headers){
+     *      headers.length;
+     *  });
+     * 
+     * @returns {undefined}
+     */
+    var getDefinitions = function(section){
+        var url = 'data/';
+        switch(section){
+            case 'status': url += 'http-status.json'; break;
+            case 'request-headers': url += 'request-headers.json'; break;
+            case 'response-headers': url += 'response-headers.json'; break;
+            default:
+                throw "Unknown section name: " + section;
+        }
+        return $http.get(url, {cache:true});
+    };
+    
+    var service = {
+        'get': getDefinitions
+    };
+    return service;
+}]);

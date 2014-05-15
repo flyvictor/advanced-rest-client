@@ -10,12 +10,80 @@ ArcDirectives.directive('appVersion', ['version', function(version) {
         };
     }]);
 
-ArcDirectives.directive('httpHeaderEditor', [function() {
+ArcDirectives.directive('httpHeaderEditor', ['$q','Definitions',function($q,Definitions) {
         return {
             restrict: 'E',
             scope: {
                 'header': '=',
+                'extSuggestion': '&suggestion',
                 'remove': '&onRemove'
+            },
+            controller: function($scope) {
+                $scope.valuePlaceholder = '';
+                var requestHeaders = null;
+                var cache = {};
+                
+                var getQueryResult = function(query){
+                    if(!requestHeaders) return [];
+                    
+                    if(query in cache){
+                        return cache[query];
+                    }
+                    
+                    if(query.trim() === ''){
+                        return requestHeaders;
+                    }
+                    
+                    query = query.toLowerCase();
+                    var result = requestHeaders.filter(function(element){
+                        return element.value.toLowerCase().indexOf(query) !== -1;
+                    });
+                    cache[query] = result;
+                    return result;
+                };
+                
+                $scope.query = function(query){
+                    var defered = $q.defer();
+                    if(requestHeaders !== null){
+                        defered.resolve(getQueryResult(query));
+                        return defered.promise;
+                    }
+                    
+                    Definitions.get('request-headers')
+                    .then(function(headers){
+                        var displays = [];
+                        headers.data.forEach(function(item){
+                            displays[displays.length] = {
+                                'value': item.key,
+                                'display': item.key,
+                                'example': item.example
+                            };
+                        });
+                        requestHeaders = displays;
+                        defered.resolve(getQueryResult(query));
+                    })
+                    .catch(function(e){ 
+                        console.error(e); 
+                        defered.reject(); 
+                    });
+                    
+                    return defered.promise;
+                };
+                $scope.suggestion = function(suggestion){
+                    $scope.header.name = suggestion;
+                    var hasPlaceholder = false;
+                    for(var i=0,len=requestHeaders.length; i<len; i++){
+                        if(requestHeaders[i].value === suggestion){
+                            $scope.valuePlaceholder = requestHeaders[i].example;
+                            hasPlaceholder = true;
+                            break;
+                        }
+                    }
+                    if(!hasPlaceholder){
+                        $scope.valuePlaceholder = '';
+                    }
+                    $scope.extSuggestion()(suggestion);
+                };
             },
             templateUrl: 'views/partials/header-editor.html'
         };
@@ -255,5 +323,176 @@ ArcDirectives.directive("userProfile", ['$User','analytics','$modal',function($U
             };
         },
         templateUrl: 'views/partials/userthumb.html'
+    };
+}]);
+
+ArcDirectives.directive('inputSuggestions', [function() {
+    return {
+        restrict: 'A',
+        scope: {
+            /**
+             * A query function. It will be called when the user will type some text into the text field.
+             * This function must return a $q object.
+             * When the user will type another letter previous $q will be canceled and will cause a new query function call.
+             */
+            'query': '&query',
+            /**
+             * Callback function on user selection.
+             * It will be called when the user will accept suggestion.
+             */
+            'suggestion': '&suggestion',
+            /**
+             * Predefinied list of suggestions to display.
+             * It will not prevent of 'query' function call.
+             */
+            'defaultSuggestions': '='
+        },
+        controller: ['$scope','$timeout', '$document', function($scope, $timeout, $document){
+            /**
+             * Called on suggestion selection.
+             * @param {String} suggestion
+             * @returns {undefined}
+             */
+            $scope.select = function(suggestion){
+                $scope.suggestion(suggestion);
+            };
+            /**
+             * Array of the suggestions.
+             * It is an array of objects. It should contain two keys:
+             * 'value' - returned by the suggestion value. It will be entered into text field and passed to suggestion function call.
+             * 'display' - a value to display. It either can be text or any HTML value. HTML values are not going to be validated!
+             */
+            $scope.suggestions = [];
+            /**
+             * Currently selected item via up/down arrows
+             */
+            $scope.selectedIndex = -1;
+            $scope.lastQuery = null;
+            var lastFuture = null;
+            
+            var makeQuery = function(value){
+                
+                if($scope.lastQuery === value){
+                    return;
+                }
+                
+                $scope.lastQuery = value;
+//                if(value.trim() === ''){
+//                    //@todo: stop showing the suggestions?
+//                    return;
+//                }
+                
+                lastFuture = $scope.query()(value);
+                lastFuture.then(function(result){
+                    if(!(result instanceof Array)){
+                        throw "Query function must result in an Array.";
+                    }
+                    
+                    $scope.suggestions = result;
+                    if(result.length === 1){
+                        $scope.selectedIndex = 0;
+                    }
+                })
+                //.catch(function(reason){})
+                .finally(function(){
+                    lastFuture = null;
+                });
+            };
+            
+            
+            /**
+             * Scope function for link.
+             * @param {String} value value from text field.
+             * @returns {undefined}
+             */
+            $scope.makeQuery = function(value){
+                $timeout(function(){
+                    makeQuery(value);
+                }, 0);
+            };
+            
+            $scope.makeSelection = function(index){
+                if(index >= 0 && index < $scope.suggestions.length){
+                    $scope.suggestion()($scope.suggestions[index].value);
+                    $scope.cleanUp();
+                }
+            };
+            
+            $scope.cleanUp = function(){
+                lastFuture = null;
+                $scope.suggestions = [];
+                $scope.selectedIndex = -1;
+            };
+            
+            var keydown = function(e){
+                if(e.keyCode === 27){
+                    $scope.$apply(function(){
+                        $scope.cleanUp();
+                    });
+                }
+            };
+            
+            $document[0].addEventListener('keydown', keydown, false);
+            $scope.$on('$destroy', function() {
+                $document[0].removeEventListener('keydown', keydown, false);
+                $scope.cleanUp();
+            });
+        }],
+        link: function(scope, element, attrs){
+            
+            /**
+             * Functional keys.
+             * Up moves selection up.
+             * Down moves selction down.
+             * Enter and right accept the suggestion. @todo: Add click event
+             * Esc cancel suggestions display.
+             * @type Object
+             */
+            var keys = {up: 38, right: 39, down: 40, enter: 13, esc: 27};
+            
+            var keydown = function(e){
+                switch(e.keyCode){
+                    case keys.up: 
+                        scope.selectedIndex--;
+                        if(scope.selectedIndex < 0){
+                            scope.selectedIndex = scope.suggestions.length-1;
+                        }
+                        e.preventDefault();
+                        break;
+                    case keys.down: 
+                        scope.selectedIndex++;
+                        if(scope.selectedIndex >= scope.suggestions.length){
+                            scope.selectedIndex = 0;
+                        }
+                        e.preventDefault();
+                        break;
+                    case keys.enter:
+                    case keys.right: 
+                        scope.makeSelection(scope.selectedIndex);
+                        e.preventDefault();
+                        break;
+                    case keys.esc: 
+                        scope.cleanUp();
+                        e.preventDefault();
+                        break;
+                    default:
+                        break;
+                }
+            };
+            
+            
+            var keyup = function(e){
+                scope.makeQuery(e.target.value);
+            };
+            
+            element[0].addEventListener('keydown', keydown, false);
+            element[0].addEventListener('keyup', keyup, false);
+            element.on('$destroy', function() {
+                element[0].removeEventListener('keydown', keydown, false);
+                element[0].removeEventListener('keyup', keyup, false);
+            });
+        },
+        templateUrl: 'views/partials/input-suggestions.html',
+        transclude: true
     };
 }]);
