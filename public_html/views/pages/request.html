@@ -82,6 +82,18 @@
 </div>
 
 <div ng-controller="ResponseController">
+    
+    <div ng-if="errors.$error.message">
+        <div class="card">
+            <p class="bg-danger connection-error">{{errors.factory.message}} ({{errors.factory.code}})</p>
+        </div>
+    </div>
+    
+    <div ng-show="loading">
+        <p class="bg-info">Loading...</p>
+    </div>
+    
+    
     <response-status status="{'code': data.response.status, 'message': data.response.statusText, 'time': data.response.responseTime}"></response-status>
     
     <section ng-if="data.redirects.length > 0" class="row form-group">

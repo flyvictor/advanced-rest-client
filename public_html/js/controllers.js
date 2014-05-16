@@ -163,13 +163,39 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
             ct = null;
             cmHighlight = false;
             $scope.data = response;
+            $scope.loading = false;
             $timeout(parsedHightlight,0);
             console.log($scope.data);
         });
-        
+    });
+    
+    $scope.$on(APP_EVENTS.START_REQUEST, function(e){
+        $scope.data = null;
+        $scope.loading = true;
+        $scope.errors.factory.message = null;
+        $scope.errors.factory.code = null;
+        $scope.errors.$error.message = false;
+    });
+    
+    $scope.$on(APP_EVENTS.REQUEST_ERROR, function(e,reason){
+        $scope.data = null;
+        $scope.loading = false;
+        $scope.errors.factory.message = reason.message;
+        $scope.errors.factory.code = reason.code;
+        $scope.errors.$error.message = true;
     });
     
     $scope.data = null;
+    $scope.loading = false;
+    $scope.errors = {
+        $error: {
+            'message': false
+        },
+        'factory': {
+            'message': null,
+            'code': -1
+        }
+    };
     var ct = null;
     var cmHighlight = false;
     

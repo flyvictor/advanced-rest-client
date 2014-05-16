@@ -663,7 +663,10 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp) {
     $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
-        runRequest();
+        runRequest()
+        .catch(function(e){
+            $rootScope.$broadcast(APP_EVENTS.REQUEST_ERROR, e);
+        });
     });
     
     
@@ -698,6 +701,13 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
                         if(result && result.data){
                             if(e[0].code in result.data){
                                 console.error("Error occured:", result.data[e[0].code]);
+                                
+                                var message = e[0].message + "\n" + result.data[e[0].code];
+                                deferred.reject({
+                                    'code': e[0].code,
+                                    'message': message
+                                });
+                                
                                 delete result.data;
                             }
                         }
@@ -743,7 +753,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             'url': requestObject.request.url,
             'method': requestObject.request.method,
             'timeout': 30000,
-            'debug': false
+            'debug': true
         };
         
         if(RequestValues.hasPayload() && requestObject.request.payload){

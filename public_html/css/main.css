@@ -429,4 +429,7 @@ p.bg-info, p.bg-danger, p.bg-primary, p.bg-success, p.bg-warning {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0; }
 
+.connection-error {
+  white-space: pre; }
+
 /*# sourceMappingURL=main.css.map */

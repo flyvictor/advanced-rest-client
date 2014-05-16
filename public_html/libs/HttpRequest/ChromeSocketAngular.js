@@ -117,7 +117,7 @@ angular.module('chrome.http', [])
             throw "Library Zlib is required by this API.";
         }
         
-        this.debug = false;
+        //this.debug = false;
         /*
          Connection properties object.
          */
@@ -550,21 +550,21 @@ angular.module('chrome.http', [])
             //@TODO: move this event into place where read size can be read and fire event with numeric values like: current and total.
             this.dispatchEvent('progress', {});
             //chrome.sockets.tcp.setPaused(this.connection.socketId, true);
-            if(!window.arc_debug){
-                window.arc_debug = {};
-            }
-            if(!window.arc_debug.rawsocket){
-                window.arc_debug.rawsocket = null;
-            }
-            if(!window.arc_debug.rawsocket){
-                window.arc_debug.rawsocket = new Uint8Array(info.data);
-            } else {
-                var narr = new Uint8Array(info.data.byteLength + window.arc_debug.rawsocket.length);
-                var bufferArray = new Uint8Array(info.data);
-                narr.set(window.arc_debug.rawsocket, 0);
-                narr.set(bufferArray, window.arc_debug.rawsocket.length);
-                window.arc_debug.rawsocket = narr;
-            }
+//            if(!window.arc_debug){
+//                window.arc_debug = {};
+//            }
+//            if(!window.arc_debug.rawsocket){
+//                window.arc_debug.rawsocket = null;
+//            }
+//            if(!window.arc_debug.rawsocket){
+//                window.arc_debug.rawsocket = new Uint8Array(info.data);
+//            } else {
+//                var narr = new Uint8Array(info.data.byteLength + window.arc_debug.rawsocket.length);
+//                var bufferArray = new Uint8Array(info.data);
+//                narr.set(window.arc_debug.rawsocket, 0);
+//                narr.set(bufferArray, window.arc_debug.rawsocket.length);
+//                window.arc_debug.rawsocket = narr;
+//            }
             this._handleMessage(info.data);
             //chrome.sockets.tcp.setPaused(this.connection.socketId, false);
         }
@@ -595,9 +595,11 @@ angular.module('chrome.http', [])
         try {
             this._readPayloadData(array);
         } catch (e) {
-            console.error(e.message,e.stack);
-            console.log('Whole message:', this._getChunkedMessageString());
-            console.groupEnd();
+            if(this.debug){
+                console.error(e.message,e.stack);
+                console.log('Whole message:', this._getChunkedMessageString());
+                console.groupEnd();
+            }
             this.dispatchEvent('error', {
                 'code': 0,
                 'message': 'The program was unable to read input data properly. ' + e.message
@@ -838,11 +840,15 @@ angular.module('chrome.http', [])
      */
     ChromeTcpConnection.prototype._readPayloadData = function(array){
         if(this.connection.aborted) return;
-        console.group("_readPayloadData");
+        if(this.debug){
+            console.group("_readPayloadData");
+        }
         
         if(array.length === 0){
-            console.info('(%f) Array\'s empty. But it should work anyway.', performance.now());
-            console.groupEnd();
+            if(this.debug){
+                console.info('(%f) Array\'s empty. But it should work anyway.', performance.now());
+                console.groupEnd();
+            }
             return;
         }
         
@@ -854,8 +860,9 @@ angular.module('chrome.http', [])
             if (this.response.responseRead === this.response.suspectedLength) {
                 this.response.ended = true;
             }
-            
-            console.groupEnd();
+            if(this.debug){
+                console.groupEnd();
+            }
             return;
         }
         
@@ -873,7 +880,9 @@ angular.module('chrome.http', [])
             array = this._readChunkSize(array);
             
             if(array === -1 && this.response.ended){ //end if HTTP message.
-                console.groupEnd();
+                if(this.debug){
+                    console.groupEnd();
+                }
                 return;
             }
             
@@ -888,8 +897,10 @@ angular.module('chrome.http', [])
                     'code': 0,
                     'message': this.connection.message
                 });
-                console.log('Whole message:', this._getChunkedMessageString());
-                console.groupEnd();
+                if(this.debug){
+                    console.log('Whole message:', this._getChunkedMessageString());
+                    console.groupEnd();
+                }
                 return;
             }
             
@@ -903,8 +914,10 @@ angular.module('chrome.http', [])
         
         var shouldBe = this.response.suspectedLength - this.response.responseRead;
         if (shouldBe < 0) {
-            console.warn('Interesting... More bytes written than suspected to be.');
-            console.groupEnd();
+            if(this.debug){
+                console.warn('Interesting... More bytes written than suspected to be.');
+                console.groupEnd();
+            }
             return;
         }
         
@@ -925,7 +938,9 @@ angular.module('chrome.http', [])
             this.response.chunkPayload = null;
             this._readPayloadData(array);
         }
-        console.groupEnd();
+        if(this.debug){
+            console.groupEnd();
+        }
     };
     /**
      * 
@@ -934,25 +949,34 @@ angular.module('chrome.http', [])
      * @returns {Uint8Array} Truncated response without chybk size line
      */
     ChromeTcpConnection.prototype._readChunkSize = function(array){
-        console.group("_readChunkSize");
+        if(this.debug){
+            console.group("_readChunkSize");
+        }
         
         if(this.connection.aborted) {
-            console.warn('(%f) Request aborted', performance.now());
-            console.groupEnd();
+            if(this.debug){
+                console.warn('(%f) Request aborted', performance.now());
+                console.groupEnd();
+            }
             return array;
         }
         
         if(array.length === 0) {
             this.response.suspectedLength = 0;
-            console.warn('(%f) Array is empty', performance.now());
-            console.groupEnd();
+            if(this.debug){
+                console.warn('(%f) Array is empty', performance.now());
+                console.groupEnd();
+            }
             return array;
         }
         
         var endMarker = new Uint8Array([48, 13, 10, 13, 10]);
         if(angular.equals(endMarker,array)){
             this.response.ended = true;
-            console.groupEnd();
+            if(this.debug){
+                console.info('This is the end of the response.');
+                console.groupEnd();
+            }
             return -1;
         }
         var i = 0;
@@ -966,22 +990,30 @@ angular.module('chrome.http', [])
             }
         }
         if(!found){
-            console.error('Chunk size is not present in the array!');
-            console.log('Whole message:', this._getChunkedMessageString());
-            console.groupEnd();
+            if(this.debug){
+                console.error('Chunk size is not present in the array!');
+                console.log('Whole message:', this._getChunkedMessageString());
+                console.groupEnd();
+            }
             return null;
         }
         var sizeArray = array.subarray(0, i);
         var sizeHex = this._arrayBufferToString(sizeArray);
-        console.log('(%f) Found chunk size (hex): %s ', performance.now(), sizeHex);
+        if(this.debug){
+            console.log('(%f) Found chunk size (hex): %s ', performance.now(), sizeHex);
+        }
 //        console.log("%cChunk data: "+this._arrayBufferToString(array), "color: blue; font-size: x-small");
         this.response.suspectedLength = parseInt(sizeHex, 16);
-        console.log("%c(%f) Decimal chunk size: %d", "color: green;", performance.now(), this.response.suspectedLength);
+        if(this.debug){
+            console.log("%c(%f) Decimal chunk size: %d", "color: green;", performance.now(), this.response.suspectedLength);
+        }
         if(isNaN(this.response.suspectedLength)){
             console.warn('(%f) Decimal chunk size is nan...', performance.now());
             this.response.suspectedLength = 0;
         }
-        console.groupEnd();
+        if(this.debug){
+            console.groupEnd();
+        }
         return array.subarray(i + 2);
     };
     /**
@@ -1111,6 +1143,16 @@ angular.module('chrome.http', [])
         if(this.debug){
             console.error(performance.now(), 'Disconnected or end of message.',info.resultCode, info.socketId);
         }
+        
+        if(this.connection.socketId === info.socketId){
+            if(info.resultCode === -100){ //SSL connections are not supported yet.
+                this.dispatchEvent('error', {
+                    'code': -100,
+                    'message': 'SSL connections are not yet supported by chrome.sockets API.'
+                });
+            }
+        }
+        
         this._cleanUpResponse();
         this._close();
         
