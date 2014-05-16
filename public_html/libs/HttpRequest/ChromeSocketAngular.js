@@ -22,13 +22,20 @@ angular.module('chrome.http', [])
 .factory('ChromeTcp', ['$q',function($q){
     /**
      * http://stackoverflow.com/a/17192845/1127848
-     * Convert Unit8Array to a utf string
-     * @param {type} uintArray
+     * Convert Uint8Array to a utf string
+     * @param {Uint8Array} uintArray
      * @returns {_L22.uintToString.decodedString}
      */
     function uintToString(uintArray) {
-        var encodedString = String.fromCharCode.apply(null, uintArray),
-                decodedString = decodeURIComponent(escape(encodedString));
+        var encodedString = "", i = 0, l = uintArray.length;
+        while (i < l) {
+            var end = Math.min(i + 10000, l);
+            encodedString += String.fromCharCode.apply(null, uintArray.subarray(i, end));
+            i = end;
+        }
+        //var encodedString = String.fromCharCode.apply(null, uintArray);
+        
+        var decodedString = decodeURIComponent(escape(encodedString));
         return decodedString;
     }
     /**
