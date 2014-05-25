@@ -4,9 +4,11 @@
             <div class="cart-title">
                 Response headers ({{headers.length}})
             </div>
-            <div ng-repeat="header in headers" class="select-text">
-                <span>{{header.name}}</span>: {{header.value}}
-            </div>
+            <div class="response-headers-container">
+                <div ng-repeat="header in headers" class="select-text response-header" popover-placement="top" popover-append-to-body="true" popover-trigger="mouseenter" ng-init="defs[header.name.toLowerCase()] = 'loading...'" popover="{{defs[header.name.toLowerCase()]}}" popover-title="{{header.name}}" ng-mouseover="addPopover($event, this)">
+                    <span class="header-name">{{header.name}}</span>: <span class="header-value">{{header.value}}</span>
+                </div>
+            </div>                
         </div>
     </div>
 </section>

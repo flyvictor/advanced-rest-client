@@ -252,7 +252,7 @@ ArcDirectives.directive('responseStatus', [function() {
         restrict: 'E',
         scope: {
             'status': '=',
-            'remove': '&onRemove'
+            'executeCommand': '&executeCommand'
         },
         templateUrl: 'views/partials/response-status.html'
     };
@@ -267,13 +267,44 @@ ArcDirectives.directive('responseRedirect', [function() {
         templateUrl: 'views/partials/response-redirect.html'
     };
 }]);
-ArcDirectives.directive('responseHeaders', [function() {
+ArcDirectives.directive('responseHeaders', ['Definitions',function(Definitions) {
     return {
         restrict: 'E',
         scope: {
             'headers': '='
         },
-        templateUrl: 'views/partials/response-headers.html'
+        templateUrl: 'views/partials/response-headers.html',
+        controller: function($scope) {
+            $scope.defs = {};
+            $scope.addPopover = function(e){
+                if(e.currentTarget.dataset.popover){
+                    return;
+                }
+                e.currentTarget.dataset.popover = true;
+                var name = e.currentTarget.querySelector('.header-name').textContent.toLowerCase();
+                if(name.trim() === '') return;
+                
+                
+                var filterHeaders = function(statuses){
+                    if(statuses && statuses.data && (statuses.data instanceof Array)){
+                        var res = statuses.data.filter(function(item){
+                            return item.key.toLowerCase() === name;
+                        });
+                        if(res.length === 0) return null;
+                        return res[0];
+                    }
+                };
+                var setPopover = function(header){
+                    if(!header) return;
+                    $scope.defs[header.key.toLowerCase()] = header.desc;                    
+                };
+                
+                Definitions.get('response-headers')
+                .then(filterHeaders)
+                .then(setPopover);
+            };
+            
+        }
     };
 }]);
 

@@ -5,11 +5,10 @@
         <group>
             <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/js/services.js</file>
             <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/js/controllers.js</file>
-            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/scss/main.scss</file>
-            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/views/pages/request.html</file>
             <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/js/app.js</file>
-            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/index.html</file>
-            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/libs/HttpRequest/ChromeSocketAngular.js</file>
+            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/js/analytics.js</file>
+            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/libs/indexeddb.js</file>
+            <file>file:/home/jarrod/NetBeansProjects/RestClient/public_html/js/fs-history.js</file>
         </group>
     </open-files>
 </project-private>

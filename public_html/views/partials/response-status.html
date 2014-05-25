@@ -13,14 +13,14 @@
                 </div>
                 <div class="pull-right">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-default btn-sm">copy as HAR</button>
+                        <button type="button" class="btn btn-default btn-sm" ng-click="$event.preventDefault(); executeCommand()('har')">copy as HAR</button>
                         <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">
                             <span class="caret"></span>
                             <span class="sr-only">Toggle Dropdown</span>
                         </button>
                         <ul class="dropdown-menu pull-right" role="menu">
-                            <li><a href="#">copy as CURL command</a></li>
-                            <li><a href="#">show recorded response</a></li>
+                            <li><a href="#" ng-click="$event.preventDefault(); executeCommand()('curl')">copy as CURL command</a></li>
+                            <li><a href="#" ng-click="$event.preventDefault(); executeCommand()('history')">show recorded response</a></li>
                         </ul>
                     </div>
                     <div class="clearfix"></div>

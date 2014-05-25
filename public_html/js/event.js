@@ -38,6 +38,10 @@ chrome.app.runtime.onLaunched.addListener(function() {
 });
 
 
+
+
+
+
 function AppInstaller() {
     this.installComplete = function() {
     };
@@ -319,41 +323,3 @@ AppInstaller.prototype = {
 };
 
 var CLIENT_ID = '10525470235.apps.googleusercontent.com';
-window.googleAuth = null;
-function initOauth2Object() {
-    window.googleAuth = new OAuth2('google', {
-        client_id: CLIENT_ID,
-        client_secret: CLIENT_SECRET,
-        api_scope: SCOPES
-    });
-}
-
-var Drive = {
-    authDrive: function(callback) {
-        if (!window.googleAuth) {
-            initOauth2Object();
-        }
-        var at = window.googleAuth.getAccessToken();
-        if (at && window.googleAuth.isAccessTokenExpired()) {
-            at = null;
-        }
-        if(!at){
-            window.googleAuth.authorize(function() {
-                var at = window.googleAuth.getAccessToken();
-                callback(Drive._prepareAuthObject(at));
-            });
-            return;
-        }
-        callback(Drive._prepareAuthObject(at));
-    },
-    _prepareAuthObject: function(at) {
-        var data = null;
-        if (at) {
-            data = {
-                'access_token': at,
-                'expires_in': window.googleAuth.get('expiresIn') - (~~((Date.now() - window.googleAuth.get('accessTokenDate')) / 1000))
-            };
-        }
-        return data;
-    }
-}

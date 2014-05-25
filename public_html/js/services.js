@@ -383,8 +383,8 @@ AppServices.factory('CodeMirror', ['RequestValues',function(RequestValues) {
  * Service to handle operation on current Request object.
  * It is responsible for managing data synchronization between services and UI and for save/restore actions. 
  */
-AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','Filesystem','DBService', '$rootScope', 'APP_EVENTS',
-    function($q,RequestValues,DriveService,Filesystem,DBService,$rootScope, APP_EVENTS) {
+AppServices.factory('ArcRequest', ['$q','RequestValues','DriveService','DBService', '$rootScope', 'APP_EVENTS',
+    function($q,RequestValues,DriveService,DBService,$rootScope, APP_EVENTS) {
         $rootScope.$on(APP_EVENTS.errorOccured, function(e, msg, reason){});
         /**
          * @ngdoc method
@@ -549,59 +549,7 @@ AppServices.factory('DriveService', ['$q',function($q) {
     };
     return service;
 }]);
-/**
- * Service responsible to manage local files.
- */
-AppServices.factory('Filesystem', ['$q',function($q) {
-    /**
-     * A directory where all requests objects files are stored.
-     * Currently Chrome supports only storing files in root folder (syncFileSystem). Issue has been reported. 
-     * @type String
-     */
-    var directory = '/';
-    /**
-     * @ngdoc method
-     * @name Filesystem.store
-     * @function
-     * 
-     * @description Store data on chrome's syncFilesystem
-     * @param {LocalItem} localItem Data to save, as JSON String.
-     * 
-     * @example 
-     *  Filesystem.store(LocalItem);
-     * 
-     * @returns {$q@call;defer.promise} The promise with {LocalItem} object.
-     */
-    var store = function(localItem){
-        var deferred = $q.defer();
-        throw "Not yet implemented";
-        return deferred.promise;
-    };
-    /**
-     * @ngdoc method
-     * @name Filesystem.restore
-     * @function
-     * 
-     * @description Restore data from syncFilesystem.
-     * @param {FileObject} fileObject - local file item info.
-     *
-     * @example 
-     *  Filesystem.restore(FileObject);
-     *
-     * @return {$q@call;defer.promise} The Promise object. Defered.then() function will return a LocalItem object.
-     */
-    var restore = function(fileObject){
-        var deferred = $q.defer();
-        throw "Not yet implemented";
-        return deferred.promise;
-    };
-    
-    var service = {
-        'store': store,
-        'restore': restore
-    };
-    return service;
-}]);
+
 /**
  * Service responsible to manage local files.
  */
@@ -661,13 +609,14 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 
 
-AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp',function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp) {
-    $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
-        runRequest()
-        .catch(function(e){
-            $rootScope.$broadcast(APP_EVENTS.REQUEST_ERROR, e);
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp','fsHistory',
+    function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp,fsHistory) {
+        $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
+            runRequest()
+            .catch(function(e){
+                $rootScope.$broadcast(APP_EVENTS.REQUEST_ERROR, e);
+            });
         });
-    });
     
     
     
@@ -753,7 +702,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             'url': requestObject.request.url,
             'method': requestObject.request.method,
             'timeout': 30000,
-            'debug': true
+            'debug': false
         };
         
         if(RequestValues.hasPayload() && requestObject.request.payload){
@@ -796,6 +745,9 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
     function ensureCurrent(){
         var deferred = $q.defer();
         
+        
+        
+        
         DBService.listHistoryCandidates(RequestValues.url,RequestValues.method)
         .then(searchHistoryFormMatch)
         .then(function(result){
@@ -822,13 +774,13 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
     return service;
 }]);
 
-AppServices.factory('ViewWorkersService', ['$q',function($q) {
+AppServices.factory('ViewWorkersService', ['$q','$sce',function($q,$sce) {
     
     function parseView(script, data){
         var deferred = $q.defer();
         var worker = new Worker('js/workers/'+script+'.js');
         worker.addEventListener('message', function(e) {
-            deferred.resolve(e.data);
+            deferred.resolve($sce.trustAsHtml(e.data));
         }, false);
         worker.addEventListener('error', function(e) {
             deferred.reject(e);
@@ -856,6 +808,145 @@ AppServices.factory('ViewWorkersService', ['$q',function($q) {
     };
     return service;
 }]);
+
+AppServices.factory('ResponseUtils', ['$q','RestConventer',function($q,RestConventer) {
+    /**
+     * @ngdoc method
+     * @name ResponseUtils.toClipboard
+     * @function
+     * 
+     * @description Copy [data] to clipboard.
+     * This function will use a trick with a textarea to copy data.
+     * @param {Any} data If is not string .toString() function will be called.
+     * 
+     * @example 
+     *  ResponseUtils.toClipboard('Some text to copy');
+     *  
+     * @returns {Boolean} It will always return true.
+     */
+    var copy2Clipoboard = function(data) {
+        if (typeof data !== 'string') {
+            data = data.toString();
+        }
+
+        var clipboardholder = document.createElement("textarea");
+        document.body.appendChild(clipboardholder);
+        clipboardholder.value = data;
+        clipboardholder.select();
+        document.execCommand("Copy");
+        clipboardholder.parentNode.removeChild(clipboardholder);
+
+        return true;
+    };
+    
+    /**
+     * @ngdoc method
+     * @name ResponseUtils.asCurl
+     * @function
+     * 
+     * @description Copy the request to clipboard as a cURL command.
+     * 
+     * @param {HttpRequest} request HTTP request obiect.
+     * @returns {$q@call;defer.promise}
+     */
+    var copyAsCurl = function(request){
+        var deferred = $q.defer();
+        RestConventer.asCurl(request)
+        .then(copy2Clipoboard)
+        .then(deferred.resolve)
+        .catch(deferred.reject);
+        return deferred.promise;
+    };
+    /**
+     * @ngdoc method
+     * @name ResponseUtils.asFile
+     *  @function
+     * 
+     * @description Save response payload as file on user's filesystem.
+     * 
+     * @param {HttpResponse} response Response data.
+     * @returns {undefined}
+     */
+    var saveResponseAsFile = function(response){
+        var deferred = $q.defer();
+        
+        
+        var mime = _getContentType(response.headers);
+        var fileExt = _getFileExtension(mime);
+        var fileOptions = {
+            'type': 'saveFile',
+            'suggestedName': 'http-export.' + fileExt
+        };
+        
+        chrome.fileSystem.chooseEntry(fileOptions, function(entry){
+            if(chrome.runtime.lastError){
+                throw chrome.runtime.lastError;
+            }
+            if(!entry){
+                throw 'No file selected.';
+            }
+            entry.createWriter(function(fileWriter) {
+                fileWriter.onwriteend = deferred.result;
+                fileWriter.onerror = deferred.reject;
+                var blob = new Blob([response.response], {type: mime});
+                fileWriter.write(blob);
+            });
+            
+        });
+        
+        return deferred.promise;
+    };
+    
+    
+    /**
+     * Get response content type (mime type) according to it's response headers
+     * @param {HttpHeaders} httpHeaders Response headers
+     * @returns {String} Response content type or 'text/plain' as default mime.
+     */
+    var _getContentType = function(httpHeaders){
+        var contentType = 'text/plain';
+        for(var i = 0, len = httpHeaders.length; i < len; i++){
+            if(httpHeaders[i].name.toLowerCase() !== 'content-type') continue;
+            var data = httpHeaders[i].value.split(';');
+            if(data && data.length > 0){
+                contentType = data[0];
+                break;
+            }
+        }
+        return contentType;
+    };
+    
+    /**
+     * Get file extenstion according to mime type.
+     * @param {String} mime
+     * @returns {String}
+     */
+    var _getFileExtension = function(mime){
+        var result = '';
+        switch(mime){
+            case 'text/plain': result = 'txt'; break;
+            case 'text/html': result = 'html'; break;
+            case 'application/json': 
+            case 'text/json':
+                result = 'json'; break;
+            case 'application/javascript': 
+            case 'text/javascript':
+                result = 'js'; break;
+            case 'text/css':
+                result = 'css'; break;
+            default:
+                result = 'txt'; break;
+        }
+        return result;
+    };
+    var service = {
+        'toClipboard': copy2Clipoboard,
+        'asCurl': copyAsCurl,
+        'asFile': saveResponseAsFile
+    };
+    return service;
+}]);
+
 
 AppServices.factory('$User', ['$q','$timeout','$http','$rootScope', function($q, $timeout, $http, $rootScope) {
     var FOLDERNAME = 'userimage', access_token = null;

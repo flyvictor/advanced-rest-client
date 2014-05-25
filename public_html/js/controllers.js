@@ -156,7 +156,9 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
     
 }]);
 
-ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EVENTS', 'CodeMirror','$timeout', 'ViewWorkersService', '$sce', function($scope, $rootScope, APP_EVENTS, CodeMirror, $timeout, ViewWorkersService, $sce){
+ArcControllers.controller('ResponseController', [
+    '$scope', 'APP_EVENTS', 'CodeMirror', '$timeout', 'ViewWorkersService', 'ResponseUtils', 'analytics',
+    function($scope, APP_EVENTS, CodeMirror, $timeout, ViewWorkersService, ResponseUtils, analytics){
     
     $scope.$on(APP_EVENTS.END_REQUEST, function(e,response){
         $scope.$apply(function(){
@@ -175,6 +177,7 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
         $scope.errors.factory.message = null;
         $scope.errors.factory.code = null;
         $scope.errors.$error.message = false;
+        
     });
     
     $scope.$on(APP_EVENTS.REQUEST_ERROR, function(e,reason){
@@ -215,7 +218,7 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
             };
             ViewWorkersService.html(data)
             .then(function(html){
-                $scope.data.parsedResponse = $sce.trustAsHtml(html);
+                $scope.data.parsedResponse = html;
                 initializePopovers();
             })
             .catch(function(reason){}); //TODO: error handling.
@@ -274,19 +277,21 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
         return !(!!$scope.hasJson() || !!$scope.hasXml());
     };
     $scope.xmlOpen = function(){
+        analytics.event('Response','View','XML');
         if(!!$scope.data.parsedXml) return;
         
         ViewWorkersService.xml($scope.data.response.response)
         .then(function(html){
-            $scope.data.parsedXml = $sce.trustAsHtml(html);
+            $scope.data.parsedXml = html;
         })
         .catch(function(reason){}); //TODO: error handling.
     };
     $scope.jsonOpen = function(){
+        analytics.event('Response','View','JSON');
         if(!!$scope.data.parsedJson) return;
         ViewWorkersService.json($scope.data.response.response)
         .then(function(html){
-            $scope.data.parsedJson = $sce.trustAsHtml(html);
+            $scope.data.parsedJson = html;
         })
         .catch(function(reason){
             console.error(reason);
@@ -298,7 +303,6 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
         if (e.target.nodeName === "A") {
             e.preventDefault();
             var url = e.target.getAttribute('href');
-            console.warn('!!TODO. Insert into values service.', url);
             $scope.values.url = url;
             return;
         }
@@ -309,7 +313,6 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
         if (e.target.nodeName === "A") {
             e.preventDefault();
             var url = e.target.getAttribute('href');
-            console.warn('!!TODO. Insert into values service.', url);
             $scope.values.url = url;
             return;
         }
@@ -339,6 +342,48 @@ ArcControllers.controller('ResponseController', ['$scope', '$rootScope', 'APP_EV
                 parent.dataset['expanded'] = "true";
         }
     };
+    /**
+     * Execute command fired from responseStatus directive.
+     * 
+     * @param {String} cmd Command to execute.
+     * @returns {undefined}
+     */
+    $scope.executeCommand = function(cmd){
+        switch(cmd){
+            case 'curl': 
+                analytics.event('Response','Option','Copy as cURL');
+                ResponseUtils.asCurl($scope.data.request);
+                break;
+            case 'har': 
+                analytics.event('Response','Option','Copy as HAR');
+                break;
+            case 'history': 
+                analytics.event('Response','Option','Open responses history');
+                break;
+            case 'as-file': 
+                analytics.event('Response','Option','Save as file');
+                ResponseUtils.asFile($scope.data.response)
+                .then(function(result){
+                    console.info(result);
+                })
+                .catch(function(reason){
+                    console.error(reason);
+                });
+                break;
+            case 'clipboard':
+                analytics.event('Response','Option','Copy to clipboard');
+                ResponseUtils.toClipboard($scope.data.response.response);
+                break;
+            case 'force-json':
+                analytics.event('Response','Option','Force JSON tab');
+                console.warn('Implement me, pls');
+                break;
+            default:
+                console.warn('Command not recognized: %s', cmd);
+                break;
+        }
+    };
+    
 }]);
 
 ArcControllers.controller('SocketController', ['$scope', function($scope){}]);

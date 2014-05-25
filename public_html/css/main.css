@@ -432,4 +432,16 @@ p.bg-info, p.bg-danger, p.bg-primary, p.bg-success, p.bg-warning {
 .connection-error {
   white-space: pre; }
 
+.response-headers-container {
+  display: flex;
+  flex-direction: column; }
+.response-headers-container .response-header {
+  display: table; }
+.response-headers-container .response-header .header-name {
+  font-weight: 400;
+  color: #858585; }
+.response-headers-container .response-header .header-value {
+  white-space: pre-line;
+  margin-left: 10px; }
+
 /*# sourceMappingURL=main.css.map */

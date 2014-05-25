@@ -13,7 +13,8 @@
         "storage",
         "unlimitedStorage",
         "syncFileSystem",
-        "clipboardWrite"
+        "clipboardWrite",
+        {"fileSystem": ["write"]}
     ],
     "sockets": {
         "tcp": {

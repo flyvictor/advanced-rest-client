@@ -94,7 +94,7 @@
     </div>
     
     
-    <response-status status="{'code': data.response.status, 'message': data.response.statusText, 'time': data.response.responseTime}"></response-status>
+    <response-status execute-command="executeCommand" status="{'code': data.response.status, 'message': data.response.statusText, 'time': data.response.responseTime}"></response-status>
     
     <section ng-if="data.redirects.length > 0" class="row form-group">
         <div class="col-md-12">
@@ -115,15 +115,14 @@
                 <div class="cart-title">
                     Response body 
                     <div class="btn-group title-dropdown">
-                        <button type="button" class="btn btn-default btn-sm">Save as file</button>
+                        <button type="button" class="btn btn-default btn-sm" ng-click="executeCommand('as-file');">Save as file</button>
                         <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">
                             <span class="caret"></span>
                             <span class="sr-only">Toggle Dropdown</span>
                         </button>
                         <ul class="dropdown-menu" role="menu">
-                            <li><a href="#">Open in new window</a></li>
-                            <li><a href="#">Copy to clipboard</a></li>
-                            <li><a href="#">Force open in JSON tab</a></li>
+                            <li><a href="#" ng-click="$event.preventDefault();executeCommand('clipboard');">Copy to clipboard</a></li>
+                            <li><a href="#" ng-if="!hasJson()" ng-click="$event.preventDefault();executeCommand('force-json');">Force open in JSON tab</a></li>
                         </ul>
                     </div>
                 </div>
