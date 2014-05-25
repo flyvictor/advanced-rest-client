@@ -597,7 +597,7 @@ angular.module('chrome.http', [])
         } catch (e) {
             if(this.debug){
                 console.error(e.message,e.stack);
-                console.log('Whole message:', this._getChunkedMessageString());
+                console.log('Whole message:', this._getMessageString());
                 console.groupEnd();
             }
             this.dispatchEvent('error', {
@@ -806,6 +806,7 @@ angular.module('chrome.http', [])
      * 
      * @param {Uint8Array} array Response payload.
      * @returns {Uint8Array}
+     * @deprecated It should not be used.
      */
     ChromeTcpConnection.prototype._setResponseLength = function(array){
         var tr = this.response.data.getResponseHeader('Transfer-Encoding');
@@ -822,6 +823,17 @@ angular.module('chrome.http', [])
         return array;
     };
     
+    /**
+     * Sets content length and basic response data based on HTTP headers.
+     * @returns {undefined}
+     */
+    ChromeTcpConnection.prototype._setContentLength = function(){
+        var cs = this.response.data.getResponseHeader('Content-Length');
+        this.response.suspectedLength = parseInt(cs);
+        if(this.response.payload === null){
+            this.response.payload = []; 
+        }
+    };
     
     /**
      * Read payload data.
@@ -852,9 +864,9 @@ angular.module('chrome.http', [])
             return;
         }
         
-        if(!this.connection.chunked){
+        if(!!!this.connection.chunked){
             //simply add response to the response array
-            this.response.payload[this.response.payload.length] = array();
+            this.response.payload[this.response.payload.length] = array;
             this.response.responseRead += array.length;
             
             if (this.response.responseRead === this.response.suspectedLength) {
@@ -898,7 +910,7 @@ angular.module('chrome.http', [])
                     'message': this.connection.message
                 });
                 if(this.debug){
-                    console.log('Whole message:', this._getChunkedMessageString());
+                    console.log('Whole message:', this._getMessageString());
                     console.groupEnd();
                 }
                 return;
@@ -992,7 +1004,7 @@ angular.module('chrome.http', [])
         if(!found){
             if(this.debug){
                 console.error('Chunk size is not present in the array!');
-                console.log('Whole message:', this._getChunkedMessageString());
+                console.log('Whole message:', this._getMessageString());
                 console.groupEnd();
             }
             return null;
@@ -1016,23 +1028,12 @@ angular.module('chrome.http', [])
         }
         return array.subarray(i + 2);
     };
+    
     /**
      * Read the response and return it as a string.
-     * 
-     * @returns {String|_L18.ChromeTcpConnection.prototype@call;_getChunkedMessageString}
+     * @returns {String}
      */
     ChromeTcpConnection.prototype._getMessageString = function(){
-        
-        var tr = this.response.data.getResponseHeader('Transfer-Encoding');
-        if (tr && tr === 'chunked') {
-            return this._getChunkedMessageString();
-        }
-        this.response.chunkPayload = this._checkCompression(this.response.chunkPayload);
-
-        return this._arrayBufferToString(this.response.chunkPayload);
-    };
-    
-    ChromeTcpConnection.prototype._getChunkedMessageString = function(){
         
         var bufferSize = 0;
         for (var i = 0, parts = this.response.payload.length; i < parts; i++) {
@@ -1153,7 +1154,7 @@ angular.module('chrome.http', [])
             }
         }
         
-        this._cleanUpResponse();
+        //this._cleanUpResponse();
         this._close();
         
     };
