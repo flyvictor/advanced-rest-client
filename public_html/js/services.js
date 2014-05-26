@@ -10,36 +10,20 @@ var AppServices = angular.module('arc.services', []);
  * @description
  * Advaced Rest Client form values.
  * This service only keeps current Request values.
- * It does nothing more. Different service is responsible for saving and reastoring data.
  */
-AppServices.factory('RequestValues', ['RequestParser',function(parser) {
+AppServices.factory('RequestValues', ['RequestParser', 'fsHistory', function(parser, fsHistory) {
     var service = {
         //current URL value
-        'url': 'http://blog.gdgpoland.org/feeds/posts/default?alt=json', //'http://beerlovers.kalicinscy.com/pubs/getCities.json',//'http://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyD2OjJy2eMbxA1PVpW2AWstcQ2mAZkxpLQ&part=snippet,contentDetails,statistics,status',//'http://gdata.youtube.com/feeds/api/playlists/OU2XLYxmsIKNXidK5HZsHu9T7zs6nxwK/?v=2&alt=json&feature=plcp', //https://www.google.com
+        'url': null, //'http://blog.gdgpoland.org/feeds/posts/default?alt=json', //'http://beerlovers.kalicinscy.com/pubs/getCities.json',//'http://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyD2OjJy2eMbxA1PVpW2AWstcQ2mAZkxpLQ&part=snippet,contentDetails,statistics,status',//'http://gdata.youtube.com/feeds/api/playlists/OU2XLYxmsIKNXidK5HZsHu9T7zs6nxwK/?v=2&alt=json&feature=plcp', //https://www.google.com
         //current HTTP method. GET by default.
         'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
         'headers': {
-            'value': [
-//                {'name': 'X-Requested-With', 'value':'XMLHttpRequest'},
-//                {'name': 'Authorization', 'value':'Basic ZGV2OmRldg=='},
-//                {'name': 'User-Agent', 'value': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
-//                {'name': 'Content-Length', 'value':'102'},
-//                {'name': 'Content-Type', 'value':'application/x-www-form-urlencoded; charset=UTF-8'}
-                
-                //{'name':'Content-Type','value':'application/json'},
-//                {'name':'accept', 'value':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'},
-//                {'name':'accept-encoding', 'value':'gzip,deflate,sdch'},
-//                {'name':'accept-language','value':'pl,en-US;q=0.8,en;q=0.6'},
-//                {'name':'cookie','value':'SID=DQAAAN8AAAAr3_Q--v2AvRL09bBqCXXkHc_FLu19T2sVR4JCWUXRXfxQHc_shGMj4lN6q1IIpvtR9iGCST8qXrVGewEsqJ3FhsctlG5EZxGrc1UuPgjiQZYd8meMmq-WWA6MxA0wi4E2eCFqL4n9Ncxs-4CL1mN4sKNkHxKDMBqeKw_X3HtRaUod7WNT9C3C1xQCmRofPsefWYNzPNLaSlHuSc8Y3QGhLGlvfQz1cTwDC3R_8qg_qrXmOG75BU1eU1XeN86e8dRqH36WtwQvFlp0DLuKturkt7t07MP892rOcL2f9smXxw; HSID=AqZE5NAucoDQL_94i; SSID=AkE28Cn71paPAdI1Q; APISID=narelD2-EmEw0yIv/AMVePkj8LQXwks6Yx; SAPISID=-HCU8GuWMYiPkyd5/AGOxqNxNf2eY-wfkQ; NID=67=WIHky7tGXFz24iFHl5SUpHAeSGojXVqYRUE6S2u_IOJ2cby7KCqKltjFLaCCsu-kE341A_Tavh41YExyKwzS4MrUSlwpN3dBiSnuwBKr3Zmlj6pLfDCveQZCAYtlcs9g51XmeVk00OjiW28NW84DQgUjZB3t_esTHd4CA4KX0uRLrYgJzebWp7sdoI6LHlGFZMDOFEt-4D9jwiNB6zFwmgtm8g; PREF=ID=6bb40e39bbbc0e9a:U=92316fa1566e76d2:FF=0:LD=en:TM=1398712891:LM=1398810992:SG=1:S=KJWUcJBgnv1-3BXP'},
-//                {'name':'user-agent','value':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.132 Safari/537.36'},
-//                {'name':'x-chrome-uma-enabled','value':'1'},
-//                {'name':'x-client-data','value':'CNK1yQEIibbJAQimtskBCKm2yQEIrJPKAQiPlMoB'}
-            ]
+            'value': []
         },
         //payload is a string of data to send
         'payload': {
-            'value': null //'latMin=47.100632784446866&latMax=53.01530298984368&lngMax=28.034705078124944&lngMin=11.489294921874944' //'{\n\t\'a\': \'b\'\n}'
+            'value': null
         },
         //array of FileObjects
         'files': []
@@ -86,6 +70,72 @@ AppServices.factory('RequestValues', ['RequestParser',function(parser) {
      */
     service.hasPayload = function(){
         return ['GET','DELETE','OPTIONS'].indexOf(service.method) === -1;
+    };
+    /**
+     * Convert current request data to JSON object
+     * @returns {Object}
+     */
+    service.toJson = function(){
+        var result = {
+            'url': service.url,
+            'method': service.method,
+            'headers': service.headers.value,
+            'payload': service.payload.value
+        };
+        return result;
+    };
+    /**
+     * Store current values in sync storage. 
+     * After the app runs again it will be used to update UI with it's values.
+     * @returns {undefined}
+     */
+    service.store = function(){
+        var data = JSON.stringify(service.toJson());
+        fsHistory.set('latest', data)
+        .then(function(){})
+        .catch(function(error){
+            console.error(error);
+        });
+    };
+    /**
+     * Restore current values from storage
+     * @returns {undefined}
+     */
+    service.restore = function(){
+        return fsHistory.get('latest')
+        .then(function(dataStr){
+            if(!!!dataStr || dataStr === "") {
+                console.info("No data in restored str.");
+                return;
+            }
+            var data;
+            try{
+                data = JSON.parse(dataStr);
+            } catch(error){
+                console.error('Error parsing latest data.',error);
+                console.error(error.stack);
+                return;
+            }
+            if(!!!data){
+                console.info('No restored data available.');
+                return;
+            }
+            if(!!data.url){
+                service.url = data.url;
+            }
+            if(!!data.method){
+                service.method = data.method;
+            }
+            if(!!data.headers){
+                service.headers.value = data.headers;
+            }
+            if(!!data.payload){
+                service.payload.value = data.payload;
+            }
+        })
+        .catch(function(error){
+            console.error(error);
+        });
     };
     
     return service;
@@ -609,8 +659,8 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 
 
-AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp','fsHistory',
-    function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp,fsHistory) {
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp',
+    function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp) {
         $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
             runRequest()
             .catch(function(e){
@@ -638,13 +688,9 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
         
         function onRequestObjectReady(request){
             request.addEventListener('load', function(e){
-                
-//                console.log('LOADED',e);
                 $rootScope.$broadcast(APP_EVENTS.END_REQUEST, e);
-                
             }).addEventListener('error', function(e){ 
                 console.log('ERROR',e);
-                
                 if(e&&e[0]&&!!e[0].code){
                     $http.get('data/connection_errors.json').then(function(result){
                         if(result && result.data){
@@ -677,17 +723,33 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
                 console.log('ABORT',e);
             }).send();
         }
+        try{
+            RequestValues.store();
+        } catch(e){}
         
-        
-        ensureCurrent()
-            .then(applyMagicVariables)
-            .then(createTheRequest)
-            .then(onRequestObjectReady)
-            .catch(function(reason){
-                deferred.reject(reason);
-            });
+        createRequestObject()
+        .then(applyMagicVariables)
+        .then(createTheRequest)
+        .then(onRequestObjectReady)
+        .catch(function(reason){
+            deferred.reject(reason);
+        });
         return deferred.promise;
     }
+    
+    function createRequestObject(){
+        var deferred = $q.defer();
+        var requestObject = {
+            url: RequestValues.url,
+            method: RequestValues.method,
+            headers: RequestValues.headers.value,
+            payload: RequestValues.payload.value,
+            files: RequestValues.files
+        };
+        deferred.resolve(requestObject);
+        return deferred.promise;
+    }
+    
     
     function applyMagicVariables(requestObject){
         var deferred = $q.defer();
@@ -699,19 +761,19 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
         var deferred = $q.defer();
         
         var requestParams = {
-            'url': requestObject.request.url,
-            'method': requestObject.request.method,
+            'url': requestObject.url,
+            'method': requestObject.method,
             'timeout': 30000,
-            'debug': false
+            'debug': true
         };
         
-        if(RequestValues.hasPayload() && requestObject.request.payload){
-            requestParams.body = requestObject.request.payload;
+        if(RequestValues.hasPayload() && requestObject.payload){
+            requestParams.body = requestObject.payload;
         }
-        if(requestObject.request.headers.length > 0){
+        if(requestObject.headers.length > 0){
             var _headers = {};
-            for(var i=0, len=requestObject.request.headers.length;i<len;i++){
-                var _h = requestObject.request.headers[i];
+            for(var i=0, len=requestObject.headers.length;i<len;i++){
+                var _h = requestObject.headers[i];
                 _headers[_h.name] = _h.value;
             }
             requestParams.headers = _headers;

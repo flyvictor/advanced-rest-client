@@ -4,8 +4,31 @@
 
 var ArcControllers = angular.module('arc.controllers', []);
 
-ArcControllers.controller('AppController', ['$scope','RequestValues','$location', '$rootScope', 'APP_EVENTS','HttpRequest', function($scope,RequestValues,$location,$rootScope,APP_EVENTS,HttpRequest){
+ArcControllers.controller('AppController', ['$scope','RequestValues','$location', '$rootScope', 'APP_EVENTS','HttpRequest','CodeMirror', function($scope,RequestValues,$location,$rootScope,APP_EVENTS,HttpRequest,CodeMirror){
     $scope.values = RequestValues;
+    RequestValues.restore()
+    .then(function(){
+        $scope.headersEditor.value = $scope.values.headers.toString();
+        if(CodeMirror.headersInst){
+            CodeMirror.headersInst.refresh();
+        }
+    });
+    
+    /**
+     * Options list for CodeMirror instance for headers
+     */
+    $scope.headersEditor = {
+        options: CodeMirror.headersOptions,
+        value: $scope.values.headers.toString()
+    };
+    /**
+     * Options list for CodeMirror instance for payload
+     */
+    $scope.payloadEditor = {
+        options: CodeMirror.payloadOptions,
+        value: $scope.values.payload.value
+    };
+    
     
     $scope.goto = function(path){
         $location.path(path);
@@ -29,7 +52,6 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
      * @returns {undefined}
      */
     $scope.removeHeader = function(header){
-        console.log('removeHeader',header);
         $scope.values.headers.value = $scope.values.headers.value.filter(function(element){
             return element !== header;
         });
@@ -95,20 +117,7 @@ ArcControllers.controller('RequestController', ['$scope','$modal','CodeMirror','
         });
     };
     
-    /**
-     * Options list for CodeMirror instance for headers
-     */
-    $scope.headersEditor = {
-        options: CodeMirror.headersOptions,
-        value: $scope.values.headers.toString()
-    };
-    /**
-     * Options list for CodeMirror instance for payload
-     */
-    $scope.payloadEditor = {
-        options: CodeMirror.payloadOptions,
-        value: $scope.values.payload.value
-    };
+    
     
     ///Observe changes in headers raw form
     $scope.$watch('headersEditor.value', function(newVal, oldVal){
