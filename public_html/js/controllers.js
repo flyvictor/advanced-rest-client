@@ -170,14 +170,17 @@ ArcControllers.controller('ResponseController', [
     function($scope, APP_EVENTS, CodeMirror, $timeout, ViewWorkersService, ResponseUtils, analytics){
     
     $scope.$on(APP_EVENTS.END_REQUEST, function(e,response){
-        $scope.$apply(function(){
-            ct = null;
-            cmHighlight = false;
-            $scope.data = response;
-            $scope.loading = false;
-            $timeout(parsedHightlight,0);
-            console.log($scope.data);
-        });
+        $timeout(function(){
+            $scope.$apply(function(){
+                ct = null;
+                cmHighlight = false;
+                $scope.data = response;
+                $scope.values.signature = response.signature;
+                $scope.loading = false;
+                $timeout(parsedHightlight,0);
+                console.log($scope.data);
+            });
+        }, 0);
     });
     
     $scope.$on(APP_EVENTS.START_REQUEST, function(e){

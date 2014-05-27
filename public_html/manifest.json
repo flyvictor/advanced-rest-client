@@ -1,5 +1,5 @@
 {
-    "name": "Advanced REST client - Dev 4",
+    "name": "Advanced REST client - FlyVictor fork",
     "description": "The web developers helper program to test HTTP requests.",
     "icons": {
         "16": "img/arc_icon_16.png",
@@ -33,5 +33,5 @@
             "scripts": ["js/event.js"]
         }
     },
-    "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCcwog3RvKBNlbE9nxa06ruwxAKR2kauzTVWYN4e1uFK8g3ScGxqG08gvuzgbOlbIO0TNHXdkJzf6DY0EPH0w8wUYDNlyav4DToaB2pdJAjcHOPsvUwktc0N0Y6ABrnreww23ZvNfqHuF0+u/Zzn3vGEFjHIcG2LGMXgP3R0QgdDQIDAQAB"
+    "key": "nfllpnhmmkpaalolddkdaoifkjombgdn"
 }

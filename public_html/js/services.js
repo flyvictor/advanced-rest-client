@@ -14,7 +14,7 @@ var AppServices = angular.module('arc.services', []);
 AppServices.factory('RequestValues', ['RequestParser', 'fsHistory', function(parser, fsHistory) {
     var service = {
         //current URL value
-        'url': null, //'http://blog.gdgpoland.org/feeds/posts/default?alt=json', //'http://beerlovers.kalicinscy.com/pubs/getCities.json',//'http://www.googleapis.com/youtube/v3/videos?id=7lCDEYXw3mM&key=AIzaSyD2OjJy2eMbxA1PVpW2AWstcQ2mAZkxpLQ&part=snippet,contentDetails,statistics,status',//'http://gdata.youtube.com/feeds/api/playlists/OU2XLYxmsIKNXidK5HZsHu9T7zs6nxwK/?v=2&alt=json&feature=plcp', //https://www.google.com
+        'url': null, //'http://blog.gdgpoland.org/feeds/posts/default?alt=json', //'http://localhost:3012/import-historic-data/?authKey=admin-frontend'
         //current HTTP method. GET by default.
         'method': 'GET',
         //headers array. Array of objects where keys are "name" and "value"
@@ -140,6 +140,44 @@ AppServices.factory('RequestValues', ['RequestParser', 'fsHistory', function(par
     
     return service;
 }]);
+
+AppServices.factory('SignatureService', function(){
+    
+    var calculateSignature = function(request, secretKey){
+        var parameters = {};
+        var queryString = new URI(request.url)._parts.query;
+        if(queryString){
+            var queryParts = queryString.split("&");
+            for(var i=0; i<queryParts.length; i++){
+                var pair = queryParts[i].split("=");
+                parameters[pair[0]] = pair[1]
+            }
+        };
+        
+        if(request.body && request.method != "GET"){
+            var body = JSON.parse(request.body);
+            for(var key in body){
+                parameters[key] = body[key];
+            }
+        }
+
+        var httpMethod = request.method,
+        url = request.url,
+        parameters = parameters,
+        //consumerSecret = 'kd94hf93k423kf44',
+        tokenSecret = secretKey,
+        //expectedEncodedSignature = 'tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D',
+        encodedSignature = oauthSignature.generate(httpMethod, url, parameters, null, tokenSecret);
+
+        return encodedSignature;
+    };
+
+    var service = {
+        'calculateSignature': calculateSignature
+    }
+    return service;
+});
+
 /**
  * @ngdoc overview
  * @name RequestParser
@@ -659,8 +697,8 @@ AppServices.factory('DBService', ['$q','$indexedDB',function($q,$indexedDB) {
 
 
 
-AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeTcp',
-    function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeTcp) {
+AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBService', '$rootScope', 'APP_EVENTS','$http','ChromeHttp', 'SignatureService',
+    function($q, ArcRequest, RequestValues, DBService, $rootScope, APP_EVENTS,$http,ChromeHttp, SignatureService) {
         $rootScope.$on(APP_EVENTS.START_REQUEST, function(e){
             runRequest()
             .catch(function(e){
@@ -668,8 +706,13 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             });
         });
     
-    
-    
+    function appendSignature(requestParams, secret){
+        var signature = SignatureService.calculateSignature(requestParams, secret);
+        console.log("signature", signature);
+        requestParams.url += "&authSignature=" + signature;
+        return signature;
+    }
+
     /**
      * Order of events:
      * 1) ensure that ArcRequest.current object exists. If not it should be created.
@@ -688,6 +731,7 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
         
         function onRequestObjectReady(request){
             request.addEventListener('load', function(e){
+                e.signature = request.signature;
                 $rootScope.$broadcast(APP_EVENTS.END_REQUEST, e);
             }).addEventListener('error', function(e){ 
                 console.log('ERROR',e);
@@ -778,7 +822,12 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
             }
             requestParams.headers = _headers;
         }
-        var req = ChromeTcp.create(requestParams);
+
+        
+        var signature = RequestValues.secretKey?appendSignature(requestParams, RequestValues.secretKey):'';
+        
+        var req = ChromeHttp.create(requestParams);
+        req.signature = signature;
         
         deferred.resolve(req);
         return deferred.promise;
