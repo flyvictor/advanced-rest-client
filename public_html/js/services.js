@@ -167,7 +167,7 @@ AppServices.factory('SignatureService', function(){
         //consumerSecret = 'kd94hf93k423kf44',
         tokenSecret = secretKey,
         //expectedEncodedSignature = 'tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D',
-        encodedSignature = oauthSignature.generate(httpMethod, url, parameters, null, tokenSecret);
+        encodedSignature = oauthSignature.generate(httpMethod, url, parameters, tokenSecret, "");
 
         return encodedSignature;
     };
@@ -708,8 +708,8 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
     
     function appendSignature(requestParams, secret){
         var signature = SignatureService.calculateSignature(requestParams, secret);
-        console.log("signature", signature);
-        requestParams.url += "&authSignature=" + signature;
+        console.log("signature", signature, requestParams);
+        requestParams.url += "&oauth_signature=" + signature;
         return signature;
     }
 
