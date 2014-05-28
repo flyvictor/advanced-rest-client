@@ -1,5 +1,9 @@
 # Advanced Rest Client for Google Chrome &trade;
 
+FlyVictor fork adds the ability to append signatures to requests, it calculates the oauth_signature value according to the spec and appends to the request. The secret can be set as an option in the Request page (if it is not set, then no signature is appended).
+(other ideas for this fork, is to handle authentication automatically as well. Refactor these functionalities as configurable "middlewares" so that it becomes more useful for other developers using the tool outside of FlyVictor etc..)
+
+
 This is a next version of the Chrome Legacy App. Previous version was done using Google Web Toolkit. However, since Java can't be so flexible to meet app's requirements I decided to rewrite the app.
 So I chose Angularjs framework.
 
