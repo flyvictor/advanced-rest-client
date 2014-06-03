@@ -239,7 +239,7 @@ angular.module('chrome.http', [])
                 'url': options.url,
                 'method': options.method,
                 'headers': options.headers,
-                'payload': options.payload,
+                'payload': options.payload || options.body,
                 'httpmessage': ''
             },
             /**
@@ -426,7 +426,7 @@ angular.module('chrome.http', [])
         var context = this,
             requestData = context.request.data;
 
-        $http[requestData.method.toLowerCase()](requestData.url)
+        $http[requestData.method.toLowerCase()](requestData.url, requestData.payload)
         .success(function(data, status, headers){
             defered.resolve({'data': data, 'headers': headers, 'status': status});
         }).error(function(data, status, headers){

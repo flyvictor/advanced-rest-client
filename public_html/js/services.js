@@ -709,7 +709,10 @@ AppServices.factory('HttpRequest', ['$q','ArcRequest', 'RequestValues','DBServic
     function appendSignature(requestParams, secret){
         var signature = SignatureService.calculateSignature(requestParams, secret);
         console.log("signature", signature);
-        requestParams.url += "&oauth_signature=" + signature;
+        if(requestParams.url.indexOf("?")>-1)
+            requestParams.url += "&oauth_signature=" + signature;
+        else 
+            requestParams.url += "?oauth_signature=" + signature;
         return signature;
     }
 
