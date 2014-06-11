@@ -154,12 +154,6 @@ AppServices.factory('SignatureService', function(){
             }
         };
         
-        if(request.body && request.method != "GET"){
-            var body = JSON.parse(request.body);
-            for(var key in body){
-                parameters[key] = body[key];
-            }
-        }
 
         var httpMethod = request.method,
         url = request.url,

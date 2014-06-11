@@ -8,6 +8,7 @@
                     <li><a ng-class="{'btn-primary': values.method === 'POST'}" ng-click="values.method='POST'">POST</a></li>
                     <li><a ng-class="{'btn-primary': values.method === 'PUT'}" ng-click="values.method='PUT'">PUT</a></li>
                     <li><a ng-class="{'btn-primary': values.method === 'DELETE'}" ng-click="values.method='DELETE'">DELETE</a></li>
+                    <li><a ng-class="{'btn-primary': values.method === 'PATCH'}" ng-click="values.method='PATCH'">PATCH</a></li>
                     <li><a ng-class="{'btn-primary': values.method === 'OPTIONS'}" ng-click="values.method='OPTIONS'">OPTIONS</a></li>
                     <li class="divider"></li>
                     <li><a ng-class="{'btn-primary': ['GET','POST','PUT','DELETE','OPTIONS'].indexOf(values.method) === -1}" ng-click="editMethodOther()">OTHER</a></li>
